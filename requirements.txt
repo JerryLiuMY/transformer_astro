@@ -1,0 +1,8 @@
+pandas==0.24.0
+numpy
+wrds
+matplotlib
+scipy
+tqdm
+bokeh
+seaborn
