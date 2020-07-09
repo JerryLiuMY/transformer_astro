@@ -1,0 +1,11 @@
+global_settings.py
+.idea/
+venv/
+.DS_Store
+.ipynb_checkpoints
+*.pyc
+*.xml
+*.iml
+*.pkl
+
+
