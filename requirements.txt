@@ -1,8 +1,7 @@
-pandas==0.24.0
+pandas
 numpy
-wrds
 matplotlib
 scipy
 tqdm
-bokeh
 seaborn
+timesynth
