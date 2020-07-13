@@ -1,6 +1,6 @@
 from keras.layers import Bidirectional, LSTM, Dropout, Dense
 from global_settings import CONFIGS_FOLDER
-from tools.data_tools import cat_generator, cat_loader
+from tools.data_tools import cat_generator
 import os
 import json
 import keras
@@ -8,18 +8,10 @@ import keras
 
 with open(os.path.join(CONFIGS_FOLDER, 'portfolio.json'), 'rb') as handle:
     params = json.load(handle)
-    generator = params["generator"]
 
 
 def run_lstm(model, dataset):
-    if generator:
-        history = model.fit_generator(cat_generator(dataset))
-    else:
-        X, y = cat_loader(dataset)
-        history = model.fit(X_train, y_train,
-                            epochs=params['epochs'],
-                            batch_size=params['batch_sze'],
-                            validation_split=0.1, shuffle=True)
+    history = model.fit_generator(cat_generator(dataset))
 
     return history
 

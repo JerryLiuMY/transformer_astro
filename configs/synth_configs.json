@@ -1,0 +1,11 @@
+{
+  "signal_type": "Sinusoidal",
+  "stop_time": 20,
+  "num_points": 500,
+  "keep_percentage": 50,
+  "frequency": 0.25,
+  "amplitude": 1,
+  "noise": "white_noise",
+  "std": 0.3,
+  "tau": 0
+}
