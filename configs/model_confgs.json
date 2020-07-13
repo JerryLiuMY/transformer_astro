@@ -3,7 +3,8 @@
   "n_dnn": 1,
   "h_rnn": 2,
   "h_dnn": 2,
-  "bi": false,
+  "bidi": false,
+  "generator": true,
   "epochs": 1000,
   "batch_size": 128
 }
