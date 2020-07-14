@@ -7,7 +7,7 @@ from config.generate_config import dict_funcs, population
 
 def generate_synth(cats):
     synth_dir = new_synth_dir()
-    
+
     catalog = pd.DataFrame(columns={'Class', 'Param', 'Old_Path'})
     for cat in cats:
         assert cat in ['sin', 'gp', 'car']
