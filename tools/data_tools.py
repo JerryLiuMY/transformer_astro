@@ -5,7 +5,6 @@ from global_settings import DATA_FOLDER
 w, s = 30, 20
 batch_size = 100
 
-
 def cat_generator(dataset):
     assert dataset in ['ASAS', 'MACHO']
     catalog = pd.read_csv(os.path.join(DATA_FOLDER, 'ASAS', 'catalog.csv'), index_col=0)
