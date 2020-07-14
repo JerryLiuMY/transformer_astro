@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from global_settings import DATA_FOLDER
+
 w, s = 30, 20
 batch_size = 100
 
@@ -31,5 +32,9 @@ def processing(df):
     return dtdm_bin
 
 
-def generate_synth():
+
+
+
+
+if __name__ == '__main__':
     pass
