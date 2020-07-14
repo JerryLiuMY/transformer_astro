@@ -3,11 +3,11 @@
   {
     "signal_type": "Sinusoidal",
     "stop_time": 20,
-    "num_point": 500,
+    "num": 500,
     "keep_percentage": 50,
     "frequency": 0.25,
     "amplitude": 1.0,
-    "noise": "white_noise",
+    "noise": "white-noise",
     "std": 0.3,
     "tau": 0
   },
@@ -15,7 +15,7 @@
    {
      "signal_type": "GP",
      "stop_time": 20,
-     "num_point": 500,
+     "num": 500,
      "keep_percentage": 50,
      "variance": 1.0,
      "gamma": 1.0,
@@ -25,9 +25,9 @@
    {
     "signal_type": "CAR",
     "stop_time": 20,
-    "num_points": 500,
+    "num": 500,
     "keep_percentage": 50,
-    "ar_param": 0.9,
+    "ar": 0.9,
     "sigma": 1
    }
 }

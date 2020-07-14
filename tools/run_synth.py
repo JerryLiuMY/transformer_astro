@@ -36,24 +36,24 @@ def run_synth(cat, **kwargs):
 
 
 def run_sin():
-    freqs, num_points, amplitudes = [0.1, 0.5, 0.8, 1], [1000, 1500, 2000], [0.5, 2, 5]
-    sigmas = [0.05, 0.1, 0.5]; whites = ["white_noise"] * len(sigmas)
-    stds, taus = [0.5, 0.5, 0.5, 0.2, 0.1], [0.8, 0.4, 1, 0.8, 0.8]; reds = ["red_noise"] * len(stds)
+    freqs, nums, amplitudes = [0.1, 0.5, 0.8, 1], [1000, 1500, 2000], [0.5, 2, 5]
+    sigmas = [0.05, 0.1, 0.5]; whites = ["white-noise"] * len(sigmas)
+    stds, taus = [0.5, 0.5, 0.5, 0.2, 0.1], [0.8, 0.4, 1, 0.8, 0.8]; reds = ["red-noise"] * len(stds)
 
     run_synth(cat="sin")
     [run_synth(cat="sin", freq=freq) for freq in freqs]
-    [run_synth(cat="sin", num_point=num_point) for num_point in num_points]
+    [run_synth(cat="sin", num=num) for num in nums]
     [run_synth(cat="sin", amplitude=amplitude) for amplitude in amplitudes]
     [run_synth(cat="sin", noise=white, sigma=sigma) for white, sigma in list(zip(whites, sigmas))]
     [run_synth(cat="sin", noise=red, std=std, tau=tau) for red, std, tau in list(zip(reds, stds, taus))]
 
 
 def run_gp():
-    num_points, sigmas = [1000, 1500, 2000], [0.1, 0.5, 1., 2., 5.]
+    nums, sigmas = [1000, 1500, 2000], [0.1, 0.5, 1., 2., 5.]
     gammas, nus, alphas = [0.1, 0.5, 1], [3. / 2], [0.5, 1, 2]
 
     run_synth(cat="gp")
-    [run_synth(cat="gp", num_point=num_point) for num_point in num_points]
+    [run_synth(cat="gp", num=num) for num in nums]
 
     kernels1, variances1 = ['Exponential'] * len(sigmas) * len(gammas), [sigma ** 2 for sigma in sigmas] * len(gammas)
     gammas1 = list(itertools.chain.from_iterable(itertools.repeat(gamma, len(sigmas)) for gamma in gammas))
@@ -72,16 +72,16 @@ def run_gp():
 
 
 def run_car():
-    num_points = [1000, 1500, 2000]
-    sigmas, ar_params = [1, 0.5, 0.1], [0.9, 0.5, 0.3]
-    sigmas1 = sigmas * len(ar_params)
-    ar_params1 = list(itertools.chain.from_iterable(itertools.repeat(ar_param, len(sigmas)) for ar_param in ar_params))
+    nums = [1000, 1500, 2000]
+    sigmas, ars = [1, 0.5, 0.1], [0.9, 0.5, 0.3]
+    sigmas1 = sigmas * len(ars)
+    ars1 = list(itertools.chain.from_iterable(itertools.repeat(ar, len(sigmas)) for ar in ars))
 
     run_synth(cat="car")
-    [run_synth(cat="car", num_point=num_point) for num_point in num_points]
+    [run_synth(cat="car", num=num) for num in nums]
 
-    for sigma, ar_param in list(zip(sigmas1, ar_params1)):
-        run_synth(cat="car", sigma=sigma, ar_param=ar_param)
+    for sigma, ar in list(zip(sigmas1, ars1)):
+        run_synth(cat="car", sigma=sigma, ar=ar)
 
 
 if __name__ == "__main__":
