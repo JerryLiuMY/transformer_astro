@@ -1,7 +1,7 @@
 pandas
 numpy
-matplotlib
 scipy
 tqdm
 seaborn
+matplotlib
 timesynth
