@@ -5,7 +5,7 @@ import itertools
 from tools.synth import sin_series, gp_series, car_series
 
 series_funcs = {"sin": sin_series, "gp": gp_series, "car": car_series}
-with open(os.path.join(CONFIG_FOLDER, "synth_config.json"), "rb") as handle:
+with open(os.path.join(CONFIG_FOLDER, "pool_config.json"), "rb") as handle:
     params = json.load(handle)
 
 
@@ -23,7 +23,7 @@ def run_synth(cat, **kwargs):
         base_dir = os.path.join(set_dir, "base")
         if not os.path.isdir(base_dir):
             os.mkdir(base_dir)
-            series_func(params[cat], base_dir)
+            series_func(base_config, base_dir)
 
     else:
         new_config = base_config.copy()

@@ -2,22 +2,37 @@ import os
 import numpy as np
 import pandas as pd
 from global_settings import DATA_FOLDER
+from config.data_config import data_config
 
-w, s = 30, 20
-batch_size = 100
+w, s, batch_size = data_config['w'], data_config['s'], data_config['batch_size']
 
 
 def cat_generator(dataset):
-    assert dataset in ['ASAS', 'MACHO']
-    catalog = pd.read_csv(os.path.join(DATA_FOLDER, 'ASAS', 'catalog.csv'), index_col=0)
+    assert dataset.split('_')[0] in ['ASAS', 'MACHO', 'Synthesis'], 'invalid dataset name'
+    catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset, 'catalog.csv'), index_col=0)
     for i in range(0, np.shape(catalog)[0], batch_size):
-        cats, paths = list(catalog['Class'])[i:i+batch_size], list(catalog['Path'])[i:i+batch_size]
-        X, y = [], []
-        for cat, path in list(zip(cats, paths)):
-            df = pd.read_csv(os.path.join(DATA_FOLDER, 'ASAS', path))
-            X.append(processing(df)); y.append([cat])
+        paths, cats = list(catalog['Path'])[i:i+batch_size], list(catalog['Class'])[i:i+batch_size]
+        X, y = load_Xy(dataset, cats, paths)
 
         yield np.array(X), np.array(y)
+
+
+def cat_loader(dataset):
+    assert dataset.split('_')[0] in ['ASAS', 'MACHO', 'Synthesis'], 'invalid dataset name'
+    catalog = pd.read_csv(os.path.join(DATA_FOLDER, {dataset}, 'catalog.csv'), index_col=0)
+    paths, cats = list(catalog['Path']), list(catalog['Class'])
+    X, y = load_Xy(dataset, cats, paths)
+
+    return np.array(X), np.array(y)
+
+
+def load_Xy(dataset, cats, paths):
+    X, y = [], []
+    for cat, path in list(zip(cats, paths)):
+        df = pd.read_csv(os.path.join(DATA_FOLDER, dataset, path))
+        X.append(processing(df)); y.append([cat])  # TODO: Filter DataFrames shorter than 80
+
+    return X, y
 
 
 def processing(df):
@@ -30,10 +45,6 @@ def processing(df):
         dtdm_bin = np.vstack([dtdm_bin, dtdm_org[i: i + w, :].reshape(-1)])
 
     return dtdm_bin
-
-
-
-
 
 
 if __name__ == '__main__':
