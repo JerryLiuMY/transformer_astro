@@ -5,3 +5,4 @@ tqdm
 seaborn
 matplotlib
 timesynth
+keras
