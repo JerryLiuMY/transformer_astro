@@ -8,3 +8,4 @@ timesynth
 keras
 tensorflow
 tensorboard
+scikit-learn

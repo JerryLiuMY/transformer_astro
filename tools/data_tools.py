@@ -3,11 +3,12 @@ import numpy as np
 import pandas as pd
 from global_settings import DATA_FOLDER
 from config.data_config import data_config
-from numpy.random import choice
 from config.train_config import train_config
+from sklearn.utils import shuffle
+from numpy.random import choice
 
 w, s, max_len = data_config['w'], data_config['s'], data_config['max_len']
-batch = train_config['batch']
+batch, sample = train_config['batch'], train_config['sample']
 
 
 def data_generator(dataset_name, set_type='train'):
@@ -30,16 +31,22 @@ def load_catalog(dataset_name, set_type):
     assert dataset_name.split('_')[0] in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'Synthesis'], 'invalid dataset name'
     assert set_type in ['train', 'valid', 'evalu'], 'invalid set type'
     catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
-    train_catalog, valid_catalog, evalu_catalog = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+    unbal_catalog, valid_catalog, evalu_catalog = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
     for cat in sorted(set(catalog['Class'])):
         catalog_ = catalog[catalog['Class'] == cat].reset_index(drop=True, inplace=False)
-        np.random.seed(1); size_ = np.shape(catalog_)[0]
-        train_catalog = pd.concat([train_catalog, catalog_.loc[choice(catalog_.index, int(size_ * 0.7))]])
-        valid_catalog = pd.concat([valid_catalog, catalog_.loc[choice(catalog_.index, int(size_ * 0.2))]])
-        evalu_catalog = pd.concat([evalu_catalog, catalog_.loc[choice(catalog_.index, int(size_ * 0.1))]])
+        np.random.seed(1); catalog_ = shuffle(catalog_); size_ = np.shape(catalog_)[0]
+        unbal_catalog = pd.concat([unbal_catalog, catalog_.iloc[:int(size_ * 0.7), :]])
+        valid_catalog = pd.concat([valid_catalog, catalog_.iloc[int(size_ * 0.7): int(size_ * 0.8), :]])
+        evalu_catalog = pd.concat([evalu_catalog, catalog_.iloc[int(size_ * 0.8):, :]])
 
-    catalog_dict = {'train': train_catalog.reset_index(drop=True),
+    train_catalog = pd.DataFrame()
+    for cat in sorted(set(unbal_catalog['Class'])):
+        np.random.seed(1)
+        train_catalog_ = unbal_catalog[unbal_catalog['Class'] == cat].reset_index(drop=True, inplace=False)
+        train_catalog = pd.concat([train_catalog, train_catalog_.loc[choice(train_catalog_.index, sample)]])
+
+    catalog_dict = {'train': unbal_catalog.reset_index(drop=True),
                     'valid': valid_catalog.reset_index(drop=True),
                     'evalu': evalu_catalog.reset_index(drop=True)}
 
