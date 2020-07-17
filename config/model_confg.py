@@ -1,10 +1,9 @@
 
-rnn_config = {
+base = {
   "generator": False,
-  "rnn_num": 2,
-  "rnn_dim": 1,
-  "dnn_num": 2,
-  "drop": 0.4,
-  "epochs": 1000,
-  "batch_size": 128
+  "rnn_nums": 1,  # [1, 2]
+  "rnn_dims": 100,  # [25, 50, 100, 200]
+  "dnn_nums": 1,  # [1, 2]
+  "drop": 0.4
 }
+

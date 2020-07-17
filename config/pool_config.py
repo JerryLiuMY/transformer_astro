@@ -1,6 +1,4 @@
-{
-  "sin":
-  {
+sin = {
     "signal_type": "Sinusoidal",
     "stop_time": 20,
     "num": 500,
@@ -10,9 +8,9 @@
     "noise": "white-noise",
     "std": 0.3,
     "tau": 0
-  },
-   "gp":
-   {
+  }
+
+gp = {
      "signal_type": "GP",
      "stop_time": 20,
      "num": 500,
@@ -20,9 +18,9 @@
      "variance": 1.0,
      "gamma": 1.0,
      "kernel": "Exponential"
-   },
-   "car":
-   {
+   }
+
+car = {
     "signal_type": "CAR",
     "stop_time": 20,
     "num": 500,
@@ -30,4 +28,5 @@
     "ar": 0.9,
     "sigma": 1
    }
-}
+
+pool_dict = {"sin": sin, "gp": gp, "car": car}
