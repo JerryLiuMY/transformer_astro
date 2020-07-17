@@ -41,10 +41,7 @@ def log_lstm(dataset_name, hyper_params):
     print('--- Starting trial: %s' % log_name)
     print({h.name: hyper_params[h] for h in hyper_params})
 
-    with tf.summary.create_file_writer(log_path).as_default():
-        hp.hparams(hyper_params)  # record the values used in this trial
-        accuracy = run_lstm(dataset_name, hyper_params, log_path)
-        tf.summary.scalar(metric, accuracy, step=1)
+    run_lstm(dataset_name, hyper_params, log_path)
 
 
 def run_lstm(dataset_name, hyper_params, log_path):
@@ -66,11 +63,6 @@ def run_lstm(dataset_name, hyper_params, log_path):
             x=x_train, y=y_train, batch_size=batch, epochs=epoch, verbose=0,
             validation_data=(x_valid, y_valid), callbacks=[metric_callbacks, hypers_callbacks]
         )
-
-    x_evalu, y_evalu = data_loader(dataset_name, 'test')
-    loss, accuracy = model.evaluate(x=x_evalu, y=y_evalu)
-
-    return accuracy
 
 
 def build_lstm(hyper_params):
