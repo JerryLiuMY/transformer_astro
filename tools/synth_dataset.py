@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from shutil import copyfile
 from global_settings import SYNTHESIS_FOLDER, DATA_FOLDER
-from config.synth_config import dict_funcs, population
+from config.dataset_config import dataset_dict, population
 
 
 def generate_synth(cats):
@@ -21,7 +21,7 @@ def generate_synth(cats):
 
 def build_catalog(catalog, cat):
     folder_names = ['base']
-    for key, value in dict_funcs[cat].items():
+    for key, value in dataset_dict[cat].items():
         if None in [param for (param_key, param) in value.items()]: continue
         params_list = ['='.join([param_key, str(param)]) for (param_key, param) in value.items()]
         folder_name = '_'.join(_ for _ in params_list)

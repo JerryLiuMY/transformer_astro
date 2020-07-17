@@ -1,12 +1,10 @@
 from global_settings import SYNTHESIS_FOLDER, CONFIG_FOLDER
 import os
-import json
 import itertools
 from tools.synth import sin_series, gp_series, car_series
+from config.pool_config import pool_dict
 
 series_funcs = {"sin": sin_series, "gp": gp_series, "car": car_series}
-with open(os.path.join(CONFIG_FOLDER, "pool_config.json"), "rb") as handle:
-    params = json.load(handle)
 
 
 def run_synth(cat, **kwargs):
@@ -17,7 +15,7 @@ def run_synth(cat, **kwargs):
     assert cat in ["sin", "gp", "car"]
     set_dir = os.path.join(SYNTHESIS_FOLDER, cat)
     if not os.path.isdir(set_dir): os.mkdir(set_dir)
-    series_func, base_config = series_funcs[cat], params[cat]
+    series_func, base_config = series_funcs[cat], pool_dict[cat]
 
     if len(kwargs.items()) == 0:
         base_dir = os.path.join(set_dir, "base")
