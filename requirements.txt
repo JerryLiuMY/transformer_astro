@@ -7,3 +7,4 @@ matplotlib
 timesynth
 keras
 tensorflow
+tensorboard
