@@ -17,7 +17,7 @@ batch, metric = train_config['batch'], train_config['metric']
 drop = rnn_config['drop']
 
 
-def loop_lstm(dataset_name):
+def run_lstm(dataset_name):
     hyp_path = os.path.join(DATA_FOLDER, f'{dataset_name}_log', 'hyper_params')
     with tf.summary.create_file_writer(hyp_path).as_default():
         hp.hparams_config(
@@ -28,10 +28,10 @@ def loop_lstm(dataset_name):
     rnn_nums, rnn_dims, dnn_nums = rnn_nums_hp.domain.values, rnn_dims_hp.domain.values, dnn_nums_hp.domain.values
     for rnn_num, rnn_dim, dnn_num in itertools.product(rnn_nums, rnn_dims, dnn_nums):
         hyper_params = {rnn_nums_hp: rnn_num, rnn_dims_hp: rnn_dim, dnn_nums_hp: dnn_num}
-        log_lstm(dataset_name, hyper_params)
+        lstm_log(dataset_name, hyper_params)
 
 
-def log_lstm(dataset_name, hyper_params):
+def lstm_log(dataset_name, hyper_params):
     rnn_num, rnn_dim, dnn_num = hyper_params[rnn_nums_hp], hyper_params[rnn_dims_hp], hyper_params[dnn_nums_hp]
     hyp_dir = os.path.join(DATA_FOLDER, f'{dataset_name}_log', 'hyper_params')
     if not os.path.isdir(hyp_dir): os.mkdir(hyp_dir)
@@ -41,13 +41,13 @@ def log_lstm(dataset_name, hyper_params):
     print('--- Starting trial: %s' % log_name)
     print({h.name: hyper_params[h] for h in hyper_params})
 
-    run_lstm(dataset_name, hyper_params, log_path)
+    lstm_step(dataset_name, hyper_params, log_path)
 
 
-def run_lstm(dataset_name, hyper_params, log_path):
+def lstm_step(dataset_name, hyper_params, log_path):
     metric_callbacks = TensorBoard(log_dir=log_path)
     hypers_callbacks = hp.KerasCallback(writer=log_path, hparams=hyper_params)
-    model = build_lstm(hyper_params)
+    model = lstm(hyper_params)
 
     x_valid, y_valid = data_loader(dataset_name, 'valid')
     if generator:
@@ -65,22 +65,31 @@ def run_lstm(dataset_name, hyper_params, log_path):
         )
 
 
-def build_lstm(hyper_params):
+def lstm(hyper_params):
     model = Sequential()
-    model.add(GRU(units=hyper_params[rnn_dims_hp], input_shape=[None, w * 2]))
+    model.add(tf.keras.layers.Masking(mask_value=0.0, input_shape=(None, w * 2)))
+    model.add(GRU(units=hyper_params[rnn_dims_hp]))
 
     for _ in range(hyper_params[rnn_nums_hp]-1):
         model.add(GRU(units=hyper_params[rnn_dims_hp]))
 
     for _ in range(hyper_params[dnn_nums_hp]):
-        model.add(Dense(units=hyper_params[rnn_dims_hp]*2, activation='relu'))
+        model.add(Dense(units=hyper_params[rnn_dims_hp]*2, activation='tanh'))
         model.add(Dropout(rate=drop))
 
     model.add(Dense(1, activation='softmax'))
 
     model.compile(
-        loss='sparse_categorical_crossentropy',
+        loss='categorical_crossentropy',
         optimizer='adam',
         metrics=[metric])
 
     return model
+
+
+# Masking
+# Loss function & Metric
+# Output to categorical
+# loop 10 times
+# k-fold validation
+# attention model 

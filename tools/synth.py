@@ -31,7 +31,7 @@ def sin_series(sin_config, save_dir):
         noise_generator = GaussianNoise(std=std) if noise == "white-noise" else RedNoise(std=std, tau=tau)
 
         mag = TimeSeries(sinusoid, noise_generator=noise_generator).sample(mjd)[0]
-        pd.DataFrame({"mjd": mjd, "mag": mag}).to_pickle(os.path.join(save_dir, f"{ii}.dat"))
+        pd.DataFrame({"mjd": mjd, "mag": mag}).to_csv(os.path.join(save_dir, f"{ii}.dat"))
 
 
 def gp_series(gp_config, save_dir):
@@ -63,7 +63,7 @@ def gp_series(gp_config, save_dir):
             gp = GaussianProcess(kernel="RQ", variance=variance, alpha=gp_config["alpha"])
 
         mag = TimeSeries(signal_generator=gp).sample(mjd)[0]
-        pd.DataFrame({"mjd": mjd, "mag": mag}).to_pickle(os.path.join(save_dir, f"{ii}.dat"))
+        pd.DataFrame({"mjd": mjd, "mag": mag}).to_csv(os.path.join(save_dir, f"{ii}.dat"))
 
 
 def car_series(car_config, save_dir):
@@ -84,4 +84,4 @@ def car_series(car_config, save_dir):
         car = CAR(ar_param=ar, sigma=sigma)
 
         mag = TimeSeries(signal_generator=car).sample(mjd)[0]
-        pd.DataFrame({"mjd": mjd, "mag": mag}).to_pickle(os.path.join(save_dir, f"{ii}.dat"))
+        pd.DataFrame({"mjd": mjd, "mag": mag}).to_csv(os.path.join(save_dir, f"{ii}.dat"))

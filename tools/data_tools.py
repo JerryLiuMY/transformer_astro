@@ -1,41 +1,48 @@
 import os
 import numpy as np
 import pandas as pd
+import pickle
 from global_settings import DATA_FOLDER
 from config.data_config import data_config
 from config.train_config import train_config
 from sklearn.utils import shuffle
 from numpy.random import choice
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from sklearn.preprocessing import OneHotEncoder
+from tqdm import tqdm
 
 w, s, max_len = data_config['w'], data_config['s'], data_config['max_len']
 batch, sample = train_config['batch'], train_config['sample']
 
 
 def data_generator(dataset_name, set_type='train'):
+    assert dataset_name.split('_')[0] in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'Synthesis'], 'invalid dataset name'
     catalog = load_catalog(dataset_name, set_type)
     for i in range(0, np.shape(catalog)[0], batch):
         catalog_ = catalog.iloc[i: i+batch, :]
         x, y = load_xy(dataset_name, catalog_)
 
-        yield np.array(x), np.array(y)
+        yield x, y
 
 
 def data_loader(dataset_name, set_type):
+    assert dataset_name.split('_')[0] in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'Synthesis'], 'invalid dataset name'
+    assert set_type in ['whole', 'train', 'valid', 'evalu'], 'invalid set type'
     catalog = load_catalog(dataset_name, set_type)
     x, y = load_xy(dataset_name, catalog)
 
-    return np.array(x), np.array(y)
+    return x, y
 
 
 def load_catalog(dataset_name, set_type):
-    assert dataset_name.split('_')[0] in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'Synthesis'], 'invalid dataset name'
-    assert set_type in ['train', 'valid', 'evalu'], 'invalid set type'
     catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
-    unbal_catalog, valid_catalog, evalu_catalog = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+    whole_catalog, unbal_catalog = pd.DataFrame(), pd.DataFrame()
+    valid_catalog, evalu_catalog = pd.DataFrame(), pd.DataFrame()
 
     for cat in sorted(set(catalog['Class'])):
         catalog_ = catalog[catalog['Class'] == cat].reset_index(drop=True, inplace=False)
         np.random.seed(1); catalog_ = shuffle(catalog_); size_ = np.shape(catalog_)[0]
+        whole_catalog = pd.concat([whole_catalog, catalog_])
         unbal_catalog = pd.concat([unbal_catalog, catalog_.iloc[:int(size_ * 0.7), :]])
         valid_catalog = pd.concat([valid_catalog, catalog_.iloc[int(size_ * 0.7): int(size_ * 0.8), :]])
         evalu_catalog = pd.concat([evalu_catalog, catalog_.iloc[int(size_ * 0.8):, :]])
@@ -46,19 +53,29 @@ def load_catalog(dataset_name, set_type):
         train_catalog_ = unbal_catalog[unbal_catalog['Class'] == cat].reset_index(drop=True, inplace=False)
         train_catalog = pd.concat([train_catalog, train_catalog_.loc[choice(train_catalog_.index, sample)]])
 
-    catalog_dict = {'train': unbal_catalog.reset_index(drop=True),
+    catalog_dict = {'whole': whole_catalog.reset_index(drop=True),
+                    'train': unbal_catalog.reset_index(drop=True),
                     'valid': valid_catalog.reset_index(drop=True),
                     'evalu': evalu_catalog.reset_index(drop=True)}
 
     return catalog_dict[set_type]
 
 
+def load_one_hot(dataset_name):
+    with open(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'), 'rb') as handle:
+        encoder = pickle.load(handle)
+
+    return encoder
+
+
 def load_xy(dataset_name, catalog):
     x, y = [], []
     cats, paths = list(catalog['Class']), list(catalog['Path'])
-    for cat, path in list(zip(cats, paths)):
+    for cat, path in tqdm(list(zip(cats, paths))):
         data_df = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, path))
         x.append(processing(data_df)); y.append([cat])
+
+    x = pad_sequences(x, value=0.0, dtype=np.float64, maxlen=max_len, truncating='post', padding='post')
 
     return x, y
 
@@ -71,9 +88,18 @@ def processing(data_df):
     dtdm_bin = np.array([], dtype=np.int64).reshape(0, 2 * w)
     for i in range(0, np.shape(dtdm_org)[0] - (w - 1), s):
         dtdm_bin = np.vstack([dtdm_bin, dtdm_org[i: i + w, :].reshape(-1)])
-        if np.shape(dtdm_bin)[0] == max_len: break
 
     return dtdm_bin
+
+
+def one_hot(dataset_name):
+    catalog = load_catalog(dataset_name, 'whole')
+    x, y = load_xy(dataset_name, catalog)
+    encoder = OneHotEncoder(handle_unknown='ignore')
+    encoder.fit(y)
+
+    with open(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'), 'wb') as handle:
+        pickle.dump(encoder, handle)
 
 
 if __name__ == '__main__':
