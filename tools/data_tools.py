@@ -10,26 +10,31 @@ from numpy.random import choice
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.preprocessing import OneHotEncoder
 from tqdm import tqdm
+from datetime import datetime
 
 w, s, max_len = data_config['w'], data_config['s'], data_config['max_len']
 batch, sample = train_config['batch'], train_config['sample']
 
 
 def data_generator(dataset_name, set_type='train'):
-    assert dataset_name.split('_')[0] in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'Synthesis'], 'invalid dataset name'
+    assert dataset_name.split('_')[0] in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'OGLE', 'Synthesis'], 'invalid dataset name'
     catalog = load_catalog(dataset_name, set_type)
+    encoder = load_one_hot(dataset_name)
     for i in range(0, np.shape(catalog)[0], batch):
         catalog_ = catalog.iloc[i: i+batch, :]
-        x, y = load_xy(dataset_name, catalog_)
+        x, y_spar = load_xy(dataset_name, catalog_, set_type)
+        y = encoder.transform(y_spar).toarray()
 
         yield x, y
 
 
 def data_loader(dataset_name, set_type):
-    assert dataset_name.split('_')[0] in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'Synthesis'], 'invalid dataset name'
+    assert dataset_name.split('_')[0] in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'OGLE', 'Synthesis'], 'invalid dataset name'
     assert set_type in ['whole', 'train', 'valid', 'evalu'], 'invalid set type'
     catalog = load_catalog(dataset_name, set_type)
-    x, y = load_xy(dataset_name, catalog)
+    encoder = load_one_hot(dataset_name)
+    x, y_spar = load_xy(dataset_name, catalog, set_type)
+    y = encoder.transform(y_spar).toarray()
 
     return x, y
 
@@ -68,16 +73,17 @@ def load_one_hot(dataset_name):
     return encoder
 
 
-def load_xy(dataset_name, catalog):
-    x, y = [], []
+def load_xy(dataset_name, catalog, set_type):
+    print(f'{datetime.now()} Loading {dataset_name} {set_type} set')
     cats, paths = list(catalog['Class']), list(catalog['Path'])
+
+    x, y_spar = [], []
     for cat, path in tqdm(list(zip(cats, paths))):
         data_df = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, path))
-        x.append(processing(data_df)); y.append([cat])
-
+        x.append(processing(data_df)); y_spar.append([cat])
     x = pad_sequences(x, value=0.0, dtype=np.float64, maxlen=max_len, truncating='post', padding='post')
 
-    return x, y
+    return x, y_spar
 
 
 def processing(data_df):

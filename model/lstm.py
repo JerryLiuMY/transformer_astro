@@ -9,8 +9,9 @@ from tensorboard.plugins.hparams import api as hp
 from datetime import datetime
 from config.train_config import train_config
 from config.model_config import rnn_config
-from tools.data_tools import data_loader, data_generator, w
+from tools.data_tools import data_loader, data_generator, load_one_hot, w
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
+
 
 generator, epoch = train_config['generator'], train_config['epoch']
 batch, metric = train_config['batch'], train_config['metric']
@@ -47,25 +48,26 @@ def lstm_log(dataset_name, hyper_params):
 def lstm_step(dataset_name, hyper_params, log_path):
     metric_callbacks = TensorBoard(log_dir=log_path)
     hypers_callbacks = hp.KerasCallback(writer=log_path, hparams=hyper_params)
-    model = lstm(hyper_params)
+    model = lstm(dataset_name, hyper_params)
 
-    x_valid, y_valid = data_loader(dataset_name, 'valid')
     if generator:
         zip_train = data_generator(dataset_name, 'train')
+        x_valid, y_valid = data_loader(dataset_name, 'valid')
         model.fit(
-            x=zip_train, epochs=epoch, verbose=0,
+            x=zip_train, epochs=epoch, verbose=1,
             validation_data=(x_valid, y_valid), callbacks=[metric_callbacks, hypers_callbacks],
             max_queue_size=10, workers=5, use_multiprocessing=False
         )
     else:
         x_train, y_train = data_loader(dataset_name, 'train')
+        x_valid, y_valid = data_loader(dataset_name, 'valid')
         model.fit(
-            x=x_train, y=y_train, batch_size=batch, epochs=epoch, verbose=0,
+            x=x_train, y=y_train, batch_size=batch, epochs=epoch, verbose=1,
             validation_data=(x_valid, y_valid), callbacks=[metric_callbacks, hypers_callbacks]
         )
 
 
-def lstm(hyper_params):
+def lstm(dataset_name, hyper_params):
     model = Sequential()
     model.add(tf.keras.layers.Masking(mask_value=0.0, input_shape=(None, w * 2)))
     model.add(GRU(units=hyper_params[rnn_dims_hp]))
@@ -77,7 +79,8 @@ def lstm(hyper_params):
         model.add(Dense(units=hyper_params[rnn_dims_hp]*2, activation='tanh'))
         model.add(Dropout(rate=drop))
 
-    model.add(Dense(1, activation='softmax'))
+    encoder = load_one_hot(dataset_name)
+    model.add(Dense(len(encoder.categories_[0]), activation='softmax'))
 
     model.compile(
         loss='categorical_crossentropy',
@@ -92,4 +95,6 @@ def lstm(hyper_params):
 # Output to categorical
 # loop 10 times
 # k-fold validation
-# attention model 
+# attention model
+# Phased LSTM
+# Stop training after loss stabilize
