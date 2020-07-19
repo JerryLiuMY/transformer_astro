@@ -10,10 +10,10 @@ metrics = [
     Precision(name='precision'),
     Recall(name='recall'),
     AUC(name='auc'),
-    TruePositives(name='tp'),
-    TrueNegatives(name='tn'),
-    FalsePositives(name='fp'),
-    FalseNegatives(name='fn'),
+    # TruePositives(name='tp'),
+    # TrueNegatives(name='tn'),
+    # FalsePositives(name='fp'),
+    # FalseNegatives(name='fn'),
 ]
 
 train_config = {

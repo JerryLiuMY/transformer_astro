@@ -78,7 +78,7 @@ def load_xy(dataset_name, catalog, set_type):
     cats, paths = list(catalog['Class']), list(catalog['Path'])
 
     x, y_spar = [], []
-    for cat, path in tqdm(list(zip(cats, paths))):
+    for cat, path in list(zip(cats, paths)):
         data_df = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, path))
         x.append(processing(data_df)); y_spar.append([cat])
     x = pad_sequences(x, value=0.0, dtype=np.float32, maxlen=max_len, truncating='post', padding='post')
