@@ -100,9 +100,9 @@ def processing(data_df):
 
 def one_hot(dataset_name):
     catalog = load_catalog(dataset_name, 'whole')
-    x, y = load_xy(dataset_name, catalog)
+    _, y_spar = load_xy(dataset_name, catalog, 'whole')
     encoder = OneHotEncoder(handle_unknown='ignore')
-    encoder.fit(y)
+    encoder.fit(y_spar)
 
     with open(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'), 'wb') as handle:
         pickle.dump(encoder, handle)
