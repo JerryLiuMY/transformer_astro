@@ -1,7 +1,7 @@
 
 data_config = {
-  "w": 30,
-  "s": 20,
+  "window": 30,
+  "stride": 20,
   "max_len": 80,
   "batch": 128
 }

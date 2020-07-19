@@ -3,12 +3,12 @@ from tensorflow.keras.metrics import CategoricalAccuracy, TopKCategoricalAccurac
 from tensorflow.keras.metrics import Precision, Recall, AUC
 from tensorflow_addons.metrics import F1Score
 
+
 metrics = [
     CategoricalAccuracy(name='accuracy'),
     TopKCategoricalAccuracy(k=5, name='k_accuracy'),
     Precision(name='precision'),
     Recall(name='recall'),
-    F1Score(name='F1'),
     AUC(name='auc'),
     TruePositives(name='tp'),
     TrueNegatives(name='tn'),
@@ -18,7 +18,7 @@ metrics = [
 
 train_config = {
     "generator": False,
-    "epoch": 1000,
+    "epoch": 10,
     "batch": 128,
     "sample": 40000,
     "metrics": metrics

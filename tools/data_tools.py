@@ -12,7 +12,7 @@ from sklearn.preprocessing import OneHotEncoder
 from tqdm import tqdm
 from datetime import datetime
 
-w, s, max_len = data_config['w'], data_config['s'], data_config['max_len']
+window, stride, max_len = data_config['window'], data_config['stride'], data_config['max_len']
 batch, sample = train_config['batch'], train_config['sample']
 
 
@@ -81,7 +81,7 @@ def load_xy(dataset_name, catalog, set_type):
     for cat, path in tqdm(list(zip(cats, paths))):
         data_df = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, path))
         x.append(processing(data_df)); y_spar.append([cat])
-    x = pad_sequences(x, value=0.0, dtype=np.float64, maxlen=max_len, truncating='post', padding='post')
+    x = pad_sequences(x, value=0.0, dtype=np.float32, maxlen=max_len, truncating='post', padding='post')
 
     return x, y_spar
 
@@ -91,9 +91,9 @@ def processing(data_df):
     data_df.reset_index(drop=True, inplace=True)
     mjd, mag = np.diff(data_df['mjd'].values).reshape(-1, 1), np.diff(data_df['mag'].values).reshape(-1, 1)
     dtdm_org = np.concatenate([mjd, mag], axis=1)
-    dtdm_bin = np.array([], dtype=np.int64).reshape(0, 2 * w)
-    for i in range(0, np.shape(dtdm_org)[0] - (w - 1), s):
-        dtdm_bin = np.vstack([dtdm_bin, dtdm_org[i: i + w, :].reshape(-1)])
+    dtdm_bin = np.array([], dtype=np.int64).reshape(0, 2 * window)
+    for i in range(0, np.shape(dtdm_org)[0] - (window - 1), stride):
+        dtdm_bin = np.vstack([dtdm_bin, dtdm_org[i: i + window, :].reshape(-1)])
 
     return dtdm_bin
 
