@@ -24,10 +24,14 @@ metric_names = ['loss'] + [_.name for _ in metrics]
 def run_lstm(dataset_name):
     log_dir = os.path.join(DATA_FOLDER, f'{dataset_name}_log')
     if not os.path.isdir(log_dir): os.mkdir(log_dir)
+    his_dir, hyp_dir = os.path.join(log_dir, 'history'), os.path.join(log_dir, 'hyper_params')
+    if not os.path.isdir(his_dir): os.mkdir(his_dir)
+    if not os.path.isdir(hyp_dir): os.mkdir(hyp_dir)
+
     with tf.summary.create_file_writer(log_dir).as_default():
         hp.hparams_config(
             hparams=[rnn_nums_hp, rnn_dims_hp, dnn_nums_hp],
-            metrics=[hp.Metric(_) for _ in metric_names],
+            metrics=[hp.Metric(_) for _ in metric_names]
         )
 
     rnn_nums, rnn_dims, dnn_nums = rnn_nums_hp.domain.values, rnn_dims_hp.domain.values, dnn_nums_hp.domain.values
