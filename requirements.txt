@@ -4,8 +4,10 @@ scipy
 tqdm
 seaborn
 matplotlib
-timesynth
+# timesynth
 keras
 tensorflow
 tensorboard
+tensorflow_addons
 scikit-learn
+
