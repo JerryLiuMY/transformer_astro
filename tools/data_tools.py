@@ -35,7 +35,7 @@ def data_loader(dataset_name, set_type):
     x, y_spar = load_xy(dataset_name, catalog, set_type)
     y = encoder.transform(y_spar).toarray()
 
-    return x, y_spar
+    return x, y
 
 
 def load_catalog(dataset_name, set_type):
