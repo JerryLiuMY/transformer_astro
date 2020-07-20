@@ -13,7 +13,7 @@ from tqdm import tqdm
 from datetime import datetime
 
 window, stride, max_len = data_config['window'], data_config['stride'], data_config['max_len']
-batch, sample = train_config['batch'], train_config['sample']
+batch, sample = train_config['batch'], data_config['sample']
 
 
 def data_generator(dataset_name, set_type='train'):
