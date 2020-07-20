@@ -9,7 +9,6 @@ from sklearn.utils import shuffle
 from numpy.random import choice
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.preprocessing import OneHotEncoder
-from tqdm import tqdm
 from datetime import datetime
 
 window, stride, max_len = data_config['window'], data_config['stride'], data_config['max_len']
@@ -36,7 +35,7 @@ def data_loader(dataset_name, set_type):
     x, y_spar = load_xy(dataset_name, catalog, set_type)
     y = encoder.transform(y_spar).toarray()
 
-    return x, y
+    return x, y_spar
 
 
 def load_catalog(dataset_name, set_type):
@@ -56,7 +55,9 @@ def load_catalog(dataset_name, set_type):
     for cat in sorted(set(unbal_catalog['Class'])):
         np.random.seed(1)
         train_catalog_ = unbal_catalog[unbal_catalog['Class'] == cat].reset_index(drop=True, inplace=False)
-        train_catalog = pd.concat([train_catalog, train_catalog_.loc[choice(train_catalog_.index, sample)]])
+        # assert sample <= np.shape(train_catalog_)[0], 'Invalid sample size'
+        train_catalog_ = train_catalog_.loc[choice(train_catalog_.index, sample, replace=True)]  # TODO: Change to False
+        train_catalog = pd.concat([train_catalog, train_catalog_])
 
     catalog_dict = {'whole': whole_catalog.reset_index(drop=True),
                     'train': unbal_catalog.reset_index(drop=True),
