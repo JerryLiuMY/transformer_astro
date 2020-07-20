@@ -1,6 +1,6 @@
-from tensorflow.keras.metrics import TruePositives, FalsePositives, TrueNegatives, FalseNegatives
 from tensorflow.keras.metrics import CategoricalAccuracy, TopKCategoricalAccuracy
 from tensorflow.keras.metrics import Precision, Recall, AUC
+from tensorflow.keras.metrics import TruePositives, FalsePositives, TrueNegatives, FalseNegatives
 from tensorflow_addons.metrics import F1Score
 
 
@@ -18,7 +18,7 @@ metrics = [
 
 train_config = {
     "generator": False,
-    "epoch": 20,
+    "epoch": 100,
     "batch": 128,
     "metrics": metrics
 }

@@ -7,14 +7,17 @@ from tensorflow.keras.models import Sequential
 from tools.data_tools import load_one_hot, window
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.train_config import train_config
-
+from model.base import log_params
 
 generator, epoch = train_config['generator'], train_config['epoch']
 batch, metrics = train_config['batch'], train_config['metrics']
 metric_names = ['epoch_loss'] + ['_'.join(['epoch', _.name]) for _ in metrics]
 
 
-class SimpleModel(Base):
+class Basic(Base):
+
+    def __init__(self, dataset_name, hyper_params):
+        super().__init__(dataset_name, hyper_params)
 
     def build(self):
         model = Sequential()
@@ -36,11 +39,19 @@ class SimpleModel(Base):
             optimizer='adam',
             metrics=metrics)
 
+        self.model = model
+
 
 def run(dataset_name):
+    log_params(dataset_name)
     rnn_nums, rnn_dims, dnn_nums = rnn_nums_hp.domain.values, rnn_dims_hp.domain.values, dnn_nums_hp.domain.values
     for rnn_num, rnn_dim, dnn_num in itertools.product(rnn_nums, rnn_dims, dnn_nums):
         hyper_params = {rnn_nums_hp: rnn_num, rnn_dims_hp: rnn_dim, dnn_nums_hp: dnn_num}
-        exp = Base(dataset_name=dataset_name, hyper_params=hyper_params)
+        exp = Basic(dataset_name=dataset_name, hyper_params=hyper_params)
         exp.build()
         exp.train()
+
+
+if __name__ == '__main__':
+    dataset_name = 'MACHO'
+    run(dataset_name)

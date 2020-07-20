@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import tensorflow as tf
 from sklearn.metrics import confusion_matrix
 from global_settings import DATA_FOLDER
@@ -69,11 +70,12 @@ class Base:
         self.x_valid, self.y_valid = data_loader(self.dataset_name, 'valid')
         self.x_evalu, self.y_evalu = data_loader(self.dataset_name, 'evalu')
 
-    def _log_confusion(self, epoch, logs):
+    def _log_confusion(self, epoch, logs=None):
         y_predi = tf.one_hot(tf.math.argmax(self.model.predict(self.x_evalu), axis=1), depth=len(self.categories))
         y_evalu_spar = self.encoder.inverse_transform(self.y_evalu)
         y_predi_spar = self.encoder.inverse_transform(y_predi)
-        matrix = confusion_matrix(y_evalu_spar, y_predi_spar)
+        matrix = confusion_matrix(y_evalu_spar, y_predi_spar, labels=self.categories)  # normalize='true'
+        matrix = np.around(matrix, decimals=2)
         confusion_figure = plot_confusion(matrix, categories=self.categories)
         confusion_image = plot_to_image(confusion_figure)
 
@@ -86,6 +88,10 @@ class Base:
             hp.hparams(self.hyper_params)
             for m, p in list(zip(metric_names, performs)):
                 tf.summary.scalar(m, p, step=0)
+
+    def build(self):
+        model = None
+        self.model = model
 
     def train(self):
         his_callbacks = TensorBoard(log_dir=self.his_path)
@@ -107,9 +113,6 @@ class Base:
             )
 
         self._log_evalu()
-
-    def build(self):
-        pass
 
 
 # confusion matrix
