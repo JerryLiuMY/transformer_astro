@@ -3,6 +3,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn.metrics import confusion_matrix
 from global_settings import DATA_FOLDER
+from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorboard.plugins.hparams import api as hp
 from datetime import datetime
@@ -70,11 +71,21 @@ class Base:
         self.x_valid, self.y_valid = data_loader(self.dataset_name, 'valid')
         self.x_evalu, self.y_evalu = data_loader(self.dataset_name, 'evalu')
 
+    def _lnr_schedule(self, epoch):
+        begin_rate = 0.001
+        decay_rate = 0.7
+        decay_step = 250
+
+        learn_rate = begin_rate * np.power(decay_rate, np.divmod(epoch, decay_step)[0])
+        tf.summary.scalar('learning Rate', data=learn_rate, step=epoch)
+
+        return learn_rate
+
     def _log_confusion(self, epoch, logs=None):
-        y_predi = tf.one_hot(tf.math.argmax(self.model.predict(self.x_evalu), axis=1), depth=len(self.categories))
-        y_evalu_spar = self.encoder.inverse_transform(self.y_evalu)
+        y_predi = tf.one_hot(tf.math.argmax(self.model.predict(self.x_valid), axis=1), depth=len(self.categories))
+        y_valid_spar = self.encoder.inverse_transform(self.y_valid)
         y_predi_spar = self.encoder.inverse_transform(y_predi)
-        matrix = confusion_matrix(y_evalu_spar, y_predi_spar, labels=self.categories)  # normalize='true'
+        matrix = confusion_matrix(y_valid_spar, y_predi_spar, labels=self.categories)  # normalize='true'
         matrix = np.around(matrix, decimals=2)
         confusion_figure = plot_confusion(matrix, categories=self.categories)
         confusion_image = plot_to_image(confusion_figure)
@@ -82,11 +93,11 @@ class Base:
         with tf.summary.create_file_writer(self.img_path).as_default():
             tf.summary.image('Confusion Matrix', confusion_image, step=epoch)
 
-    def _log_evalu(self):
-        performs = self.model.evaluate(x=self.x_evalu, y=self.y_evalu)
+    def _log_evalu(self, logs=None):
+        performances = self.model.evaluate(x=self.x_evalu, y=self.y_evalu)
         with tf.summary.create_file_writer(self.hyp_path).as_default():
             hp.hparams(self.hyper_params)
-            for m, p in list(zip(metric_names, performs)):
+            for m, p in list(zip(metric_names, performances)):
                 tf.summary.scalar(m, p, step=0)
 
     def build(self):
@@ -94,9 +105,11 @@ class Base:
         self.model = model
 
     def train(self):
-        his_callbacks = TensorBoard(log_dir=self.his_path)
-        img_callbacks = LambdaCallback(on_epoch_end=self._log_confusion)
-        callbacks = [his_callbacks, img_callbacks]
+        lnr_callback = LearningRateScheduler(schedule=self._lnr_schedule, verbose=1)
+        his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
+        img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
+        eva_callback = LambdaCallback(on_train_end=self._log_evalu)
+        callbacks = [lnr_callback, his_callback, img_callback, eva_callback]
 
         if generator:
             zip_train = data_generator(self.dataset_name, 'train')
@@ -112,10 +125,7 @@ class Base:
                 validation_data=(self.x_valid, self.y_valid), callbacks=callbacks,
             )
 
-        self._log_evalu()
 
-
-# learning rate
 # loop 10 times
 # k-fold validation
 # Stop training after loss stabilize

@@ -6,7 +6,7 @@ import tensorflow as tf
 
 
 def plot_confusion(matrix, categories):
-    figure = plt.figure(figsize=(10, 10), dpi=500)
+    figure = plt.figure(figsize=(9, 9))
     plt.imshow(matrix, interpolation='nearest', cmap='Blues')
     plt.title('Confusion Matrix')
     plt.colorbar()
