@@ -12,8 +12,8 @@ from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.train_config import train_config
 
 
-generator, epoch = train_config['generator'], train_config['epoch']
-batch, metrics = train_config['batch'], train_config['metrics']
+generator, epoch, batch = train_config['generator'], train_config['epoch'], train_config['batch']
+metrics = train_config['metrics']
 metric_names = ['epoch_loss'] + ['_'.join(['epoch', _.name]) for _ in metrics]
 
 
@@ -115,10 +115,7 @@ class Base:
         self._log_evalu()
 
 
-# confusion matrix
-# call back data type
 # learning rate
-# F1 score
 # loop 10 times
 # k-fold validation
 # Stop training after loss stabilize
