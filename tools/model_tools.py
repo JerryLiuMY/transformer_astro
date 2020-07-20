@@ -8,26 +8,23 @@ from datetime import datetime
 from tensorflow.keras.callbacks import TensorBoard
 from tools.data_tools import data_loader, load_one_hot
 import sklearn
-seaborn.set()
+
+log_dir = ''
 
 
-logdir = 'logs/image/' + datetime.now().strftime('%Y%m%d-%H%M%S')
-tensorboard_callback = TensorBoard(log_dir=logdir)
-
-
-def log_confusion(epoch, logs):
-    encoder = load_one_hot(dataset_name)
-    categories = encoder.categories_[0]
-    x_evalu, y_true = data_loader(dataset_name, 'valid')
-    y_pred = tf.one_hot(tf.argmax(model.predict(x_evalu), dimension=1), depth=2)
-    y_true_spar, y_pred_spar = encoder.inverse_transform(y_true), encoder.inverse_transform(y_pred)
-
-    matrix = sklearn.metrics.confusion_matrix(y_true_spar, y_pred_spar)
-    confusion_figure = plot_confusion(matrix, categories=categories)
-    confusion_image = plot_to_image(confusion_figure)
-
-    with tf.summary.create_file_writer(logdir + '/cm').as_default():
-        tf.summary.image('Confusion Matrix', confusion_image, step=epoch)
+# def log_confusion(epoch, logs):
+#     encoder = load_one_hot(dataset_name)
+#     categories = encoder.categories_[0]
+#     x_evalu, y_true = data_loader(dataset_name, 'valid')
+#     y_pred = tf.one_hot(tf.argmax(model.predict(x_evalu), dimension=1), depth=2)
+#     y_true_spar, y_pred_spar = encoder.inverse_transform(y_true), encoder.inverse_transform(y_pred)
+#
+#     matrix = sklearn.metrics.confusion_matrix(y_true_spar, y_pred_spar)
+#     confusion_figure = plot_confusion(matrix, categories=categories)
+#     confusion_image = plot_to_image(confusion_figure)
+#
+#     with tf.summary.create_file_writer(logdir + '/').as_default():
+#         tf.summary.image('Confusion Matrix', confusion_image, step=epoch)
 
 
 def plot_confusion(matrix, categories):
@@ -52,7 +49,6 @@ def plot_confusion(matrix, categories):
 
 
 def plot_to_image(figure):
-    """Converts the matplotlib plot specified by 'figure' to a PNG image and returns it."""
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     plt.close(figure)

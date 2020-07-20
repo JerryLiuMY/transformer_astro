@@ -18,9 +18,8 @@ metrics = [
 
 train_config = {
     "generator": False,
-    "epoch": 10,
+    "epoch": 20,
     "batch": 128,
-    "sample": 40000,
     "metrics": metrics
 }
 
