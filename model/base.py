@@ -1,17 +1,18 @@
 import os
 import numpy as np
 import tensorflow as tf
+from sklearn.utils import class_weight
 from sklearn.metrics import confusion_matrix
 from global_settings import DATA_FOLDER
 from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorboard.plugins.hparams import api as hp
 from datetime import datetime
-from tools.data_tools import data_loader, data_generator, load_one_hot
+from tools.data_tools import data_loader, load_one_hot
+from tools.data_tools import DataGenerator
 from tools.model_tools import plot_confusion, plot_to_image
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.train_config import train_config
-
 
 generator, epoch, batch = train_config['generator'], train_config['epoch'], train_config['batch']
 metrics = train_config['metrics']
@@ -82,10 +83,11 @@ class Base:
         return learn_rate
 
     def _log_confusion(self, epoch, logs=None):
-        y_predi = tf.one_hot(tf.math.argmax(self.model.predict(self.x_valid), axis=1), depth=len(self.categories))
+        max_arg = tf.math.argmax(self.model.predict(self.x_valid), axis=1)
+        y_predi = tf.one_hot(max_arg, depth=len(self.categories)).numpy()
         y_valid_spar = self.encoder.inverse_transform(self.y_valid)
         y_predi_spar = self.encoder.inverse_transform(y_predi)
-        matrix = confusion_matrix(y_valid_spar, y_predi_spar, labels=self.categories)  # normalize='true'
+        matrix = confusion_matrix(y_valid_spar, y_predi_spar, labels=self.categories)  # TODO: normalize='true'
         matrix = np.around(matrix, decimals=2)
         confusion_figure = plot_confusion(matrix, categories=self.categories)
         confusion_image = plot_to_image(confusion_figure)
@@ -105,6 +107,11 @@ class Base:
         self.model = model
 
     def train(self):
+        self.model.compile(
+            loss='categorical_crossentropy',
+            optimizer='adam',
+            metrics=metrics)
+
         lnr_callback = LearningRateScheduler(schedule=self._lnr_schedule, verbose=1)
         his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
         img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
@@ -112,23 +119,26 @@ class Base:
         callbacks = [lnr_callback, his_callback, img_callback, eva_callback]
 
         if generator:
-            zip_train = data_generator(self.dataset_name, 'train')
+            data_generator = DataGenerator(self.dataset_name)  # (x_train, y_train, sample_weight)
             self.model.fit(
-                x=zip_train, epochs=epoch, verbose=1,
+                x=data_generator, epochs=epoch, verbose=1,
                 validation_data=(self.x_valid, self.y_valid), callbacks=callbacks,
-                max_queue_size=10, workers=5, use_multiprocessing=False
+                max_queue_size=10, workers=5
             )
         else:
             x_train, y_train = data_loader(self.dataset_name, 'train')
+            sample_weight = class_weight.compute_sample_weight('balanced', y_train)
             self.model.fit(
-                x=x_train, y=y_train, batch_size=batch, epochs=epoch, verbose=1,
+                x=x_train, y=y_train, sample_weight=sample_weight, batch_size=batch, epochs=epoch, verbose=1,
                 validation_data=(self.x_valid, self.y_valid), callbacks=callbacks,
             )
 
 
-# loop 10 times
 # k-fold validation
-# Stop training after loss stabilize
+# loop 10 times
+# over & under sampling
+# regularization -- bias and variance trade off / terminate training after loss stabilize
+
 # attention model
 # Phased LSTM
 

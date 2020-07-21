@@ -34,11 +34,6 @@ class Basic(Base):
         encoder = load_one_hot(self.dataset_name)
         model.add(Dense(len(encoder.categories_[0]), activation='softmax'))
 
-        model.compile(
-            loss='categorical_crossentropy',
-            optimizer='adam',
-            metrics=metrics)
-
         self.model = model
 
 

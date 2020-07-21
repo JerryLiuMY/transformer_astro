@@ -17,7 +17,7 @@ metrics = [
 ]
 
 train_config = {
-    "generator": False,
+    "generator": True,
     "epoch": 20,
     "batch": 128,
     "metrics": metrics
