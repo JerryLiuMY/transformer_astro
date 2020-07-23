@@ -20,6 +20,7 @@ train_config = {
     "generator": True,
     "epoch": 20,
     "batch": 128,
-    "metrics": metrics
+    "metrics": metrics,
+    "kfold": 5,
 }
 
