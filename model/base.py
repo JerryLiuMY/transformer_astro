@@ -8,7 +8,8 @@ from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorboard.plugins.hparams import api as hp
 from datetime import datetime
-from tools.data_tools import data_loader, load_one_hot
+from tools.data_tools import data_loader
+from tools.utils import load_one_hot
 from tools.data_tools import DataGenerator
 from tools.model_tools import plot_confusion, plot_to_image
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
@@ -135,7 +136,6 @@ class Base:
 
 
 # k-fold validation
-# loop 10 times
 # over & under sampling
 # regularization -- bias and variance trade off / terminate training after loss stabilize
 

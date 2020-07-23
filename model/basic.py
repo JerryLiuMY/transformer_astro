@@ -4,7 +4,8 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.layers import GRU, Dropout, Dense
 from tensorflow.keras.models import Sequential
-from tools.data_tools import load_one_hot, window
+from tools.data_tools import window
+from tools.utils import load_one_hot
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.train_config import train_config
 from model.base import log_params
@@ -48,5 +49,4 @@ def run(dataset_name):
 
 
 if __name__ == '__main__':
-    dataset_name = 'MACHO'
-    run(dataset_name)
+    run('ASAS')

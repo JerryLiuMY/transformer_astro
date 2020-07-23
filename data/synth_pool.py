@@ -1,7 +1,7 @@
-from global_settings import SYNTHESIS_FOLDER, CONFIG_FOLDER
+from global_settings import SYNTHESIS_FOLDER
 import os
 import itertools
-from tools.synth import sin_series, gp_series, car_series
+from data.synth import sin_series, gp_series, car_series
 from config.pool_config import pool_dict
 
 series_funcs = {"sin": sin_series, "gp": gp_series, "car": car_series}
