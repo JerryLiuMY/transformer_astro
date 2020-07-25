@@ -7,13 +7,20 @@ from sklearn.preprocessing import OneHotEncoder
 from tensorflow.python.keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import StratifiedKFold
 from global_settings import DATA_FOLDER
-from tools.data_tools import max_len, window, stride
+from config.data_config import data_config
+from config.train_config import train_config
+
+window, stride = data_config['window'], data_config['stride']
+max_len, sample = data_config['max_len'], data_config['sample']
+kfold = train_config['kfold']
 
 
 def load_catalog(dataset_name, set_type):
     catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
     whole_catalog, train_catalog = pd.DataFrame(), pd.DataFrame()
     valid_catalog, evalu_catalog = pd.DataFrame(), pd.DataFrame()
+
+    # TODO: WISE need to drop some categories
 
     for cat in sorted(set(catalog['Class'])):
         catalog_ = catalog[catalog['Class'] == cat].reset_index(drop=True, inplace=False)
@@ -23,6 +30,7 @@ def load_catalog(dataset_name, set_type):
         valid_catalog = pd.concat([valid_catalog, catalog_.iloc[int(size_ * 0.7): int(size_ * 0.8), :]])
         evalu_catalog = pd.concat([evalu_catalog, catalog_.iloc[int(size_ * 0.8):, :]])
 
+    # This step is re-sampling
     # train_catalog = pd.DataFrame()
     # for cat in sorted(set(unbal_catalog['Class'])):
     #     np.random.seed(1)
@@ -36,6 +44,22 @@ def load_catalog(dataset_name, set_type):
                     'evalu': evalu_catalog.reset_index(drop=True)}
 
     return catalog_dict[set_type]
+
+
+def load_fold(dataset_name, set_type, fold):
+    skf = StratifiedKFold(n_splits=kfold, shuffle=True, random_state=0)
+    catalog = load_catalog(dataset_name, 'whole')
+    y_spar = catalog['Class'].values.reshape(-1, 1)
+
+    fold_dict = {}; fold_idx = 0
+    for train_idx, valid_idx in skf.split(catalog, y_spar):
+        # No need to reset index on each catalog
+        train_catalog = catalog.iloc[train_idx, :]
+        valid_catalog = catalog.iloc[valid_idx, :]
+        fold_dict[str(fold_idx)] = {'train': train_catalog, 'valid': valid_catalog}
+        fold_idx += 1
+
+    return fold_dict[fold][set_type]
 
 
 def load_one_hot(dataset_name):
@@ -56,21 +80,6 @@ def load_xy(dataset_name, catalog):
     x, y_spar = np.array(x), np.array(y_spar)
 
     return x, y_spar
-
-
-def load_fold(dataset_name, fold):
-    skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=0)
-    catalog = load_catalog(dataset_name, 'whole')
-    y_spar = catalog['Class'].values.reshape(-1, 1)
-    fold_dict = {}; fold_idx = 0
-    for train_idx, valid_idx in skf.split(catalog, y_spar):
-        # No need to reset index on each catalog
-        train_catalog = catalog.iloc[train_idx, :]
-        valid_catalog = catalog.iloc[valid_idx, :]
-        fold_dict[str(fold)] = {'train': train_catalog, 'valid': valid_catalog}
-        fold_idx += 1
-
-    return fold_dict[str(fold)]
 
 
 def processing(data_df):
@@ -94,3 +103,11 @@ def _dump_one_hot(dataset_name):
     with open(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'), 'wb') as handle:
         pickle.dump(encoder, handle)
 
+
+def new_dir(log_dir):
+    past_dirs = next(os.walk(log_dir))[1]
+    new_num = 0 if len(past_dirs) == 0 else np.max([int(past_dir.split('_')[-1]) for past_dir in past_dirs]) + 1
+    exp_dir = os.path.join(log_dir, '_'.join(['experiment', str(new_num)]))
+    os.mkdir(exp_dir)
+
+    return exp_dir
