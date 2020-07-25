@@ -3,7 +3,6 @@ import numpy as np
 import tensorflow as tf
 from sklearn.utils import class_weight
 from sklearn.metrics import confusion_matrix
-from global_settings import DATA_FOLDER
 from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorboard.plugins.hparams import api as hp
@@ -13,12 +12,11 @@ from tools.data_tools import DataGenerator, FoldGenerator
 from tools.utils import load_one_hot
 from tools.model_tools import plot_confusion, plot_to_image
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
-from config.train_config import train_config
+from config.exec_config import train_config
 
-generator, epoch = train_config['generator'], train_config['epoch']
+use_gen, epoch = train_config['use_gen'], train_config['epoch']
 metrics, batch = train_config['metrics'], train_config['batch']
 metric_names = ['epoch_loss'] + ['_'.join(['epoch', _.name]) for _ in metrics]
-kfold = train_config['kfold']
 
 
 def log_params(exp_dir):
@@ -30,7 +28,7 @@ def log_params(exp_dir):
 
 
 class Base:
-    
+
     def __init__(self, dataset_name, hyper_param, exp_dir):
         self.dataset_name = dataset_name
         self.hyper_param = hyper_param
@@ -71,8 +69,23 @@ class Base:
     def _load_data(self):
         self.x_valid, self.y_valid = data_loader(self.dataset_name, 'valid')
         self.x_evalu, self.y_evalu = data_loader(self.dataset_name, 'evalu')
+        if not use_gen:
+            self.train = data_loader(self.dataset_name, 'train')
+        else:
+            self.train = DataGenerator(self.dataset_name)
 
-    def _log_confusion(self, epoch, logs=None):
+    @staticmethod
+    def _lnr_schedule(step):
+        begin_rate = 0.001
+        decay_rate = 0.7
+        decay_step = 250
+
+        learn_rate = begin_rate * np.power(decay_rate, np.divmod(step, decay_step)[0])
+        tf.summary.scalar('learning Rate', data=learn_rate, step=step)
+
+        return learn_rate
+
+    def _log_confusion(self, step, logs=None):
         max_arg = tf.math.argmax(self.model.predict(self.x_valid), axis=1)
         y_predi = tf.one_hot(max_arg, depth=len(self.categories)).numpy()
         y_valid_spar = self.encoder.inverse_transform(self.y_valid)
@@ -83,7 +96,7 @@ class Base:
         confusion_image = plot_to_image(confusion_figure)
 
         with tf.summary.create_file_writer(self.img_path).as_default():
-            tf.summary.image('Confusion Matrix', confusion_image, step=epoch)
+            tf.summary.image('Confusion Matrix', confusion_image, step=step)
 
     def _log_evalu(self, logs=None):
         performances = self.model.evaluate(x=self.x_evalu, y=self.y_evalu)
@@ -102,58 +115,42 @@ class Base:
             optimizer='adam',
             metrics=metrics)
 
-        lnr_callback = LearningRateScheduler(schedule=_lnr_schedule, verbose=1)
+        lnr_callback = LearningRateScheduler(schedule=self._lnr_schedule, verbose=1)
         his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
         img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
         eva_callback = LambdaCallback(on_train_end=self._log_evalu)
         callbacks = [lnr_callback, his_callback, img_callback, eva_callback]
 
-        if generator:
-            data_generator = DataGenerator(self.dataset_name)  # (x_train, y_train, sample_weight)
-            self.model.fit(
-                x=data_generator, epochs=epoch, verbose=1,
-                validation_data=(self.x_valid, self.y_valid), callbacks=callbacks,
-                max_queue_size=10, workers=5
-            )
-        else:
-            x_train, y_train = data_loader(self.dataset_name, 'train')
+        if not use_gen:
+            x_train, y_train = self.train
             sample_weight = class_weight.compute_sample_weight('balanced', y_train)
             self.model.fit(
                 x=x_train, y=y_train, sample_weight=sample_weight, batch_size=batch, epochs=epoch, verbose=1,
                 validation_data=(self.x_valid, self.y_valid), callbacks=callbacks
             )
-
-        return self.model
-
-
-def test(dataset_name, model):
-    for fold in range(kfold):
-        if generator:
-            fold_generator = FoldGenerator(dataset_name, fold)
-            model.fit(
-                x=fold_generator, epochs=epoch, verbose=1,
+        else:
+            generator = self.train  # (x_train, y_train, sample_weight)
+            self.model.fit(
+                x=generator, epochs=epoch, verbose=1,
+                validation_data=(self.x_valid, self.y_valid), callbacks=callbacks,
                 max_queue_size=10, workers=5
             )
+
+
+class FoldBase(Base):
+
+    def __init__(self, dataset_name, hyper_param, exp_dir, fold):
+        super().__init__(dataset_name, hyper_param, exp_dir)
+        self.fold = fold
+
+    def _load_data(self):
+        self.x_valid, self.y_valid = fold_loader(self.dataset_name, 'valid', self.fold)
+        self.x_evalu, self.y_evalu = fold_loader(self.dataset_name, 'evalu', self.fold)
+        if not use_gen:
+            self.train = fold_loader(self.dataset_name, 'train', self.fold)
         else:
-            x_train, y_train = fold_loader(dataset_name, 'train', fold)
-            sample_weight = class_weight.compute_sample_weight('balanced', y_train)
-            model.fit(
-                x=x_train, y=y_train, sample_weight=sample_weight, batch_size=batch, epochs=epoch, verbose=1
-            )
+            self.train = FoldGenerator(self.dataset_name, self.fold)
 
-        x_valid, y_valid = fold_loader(dataset_name, 'valid', fold)
-        model.evaluate(x=x_valid, y=y_valid)
-
-
-def _lnr_schedule(epoch):
-    begin_rate = 0.001
-    decay_rate = 0.7
-    decay_step = 250
-
-    learn_rate = begin_rate * np.power(decay_rate, np.divmod(epoch, decay_step)[0])
-    tf.summary.scalar('learning Rate', data=learn_rate, step=epoch)
-
-    return learn_rate
 
 # over & under sampling
 # regularization -- bias and variance trade off / terminate training after loss stabilize

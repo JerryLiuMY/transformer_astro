@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from shutil import copyfile
 from global_settings import SYNTHESIS_FOLDER, DATA_FOLDER
-from config.dataset_config import dataset_dict, population
+from config._synth_config import dataset_dict, population
 
 
 def generate_synth(cats):

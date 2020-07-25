@@ -3,7 +3,7 @@ import numpy as np
 import sklearn
 import pandas as pd
 from sklearn.utils import class_weight
-from config.train_config import train_config
+from config.exec_config import train_config
 from tensorflow.keras.utils import Sequence
 from datetime import datetime
 from tools.utils import load_fold, load_catalog, load_one_hot, load_xy
