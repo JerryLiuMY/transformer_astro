@@ -1,23 +1,22 @@
 import math
 import numpy as np
 import sklearn
+import pandas as pd
 from sklearn.utils import class_weight
-from config.data_config import data_config
 from config.train_config import train_config
 from tensorflow.keras.utils import Sequence
 from datetime import datetime
-from tools.utils import load_fold
-from tools.utils import load_catalog, load_one_hot, load_xy
-
-window, stride, max_len = data_config['window'], data_config['stride'], data_config['max_len']
-batch, kfold, sample = train_config['batch'], train_config['kfold'], data_config['sample']
+from tools.utils import load_fold, load_catalog, load_one_hot, load_xy
 
 
-class DataGenerator(Sequence):
+batch = train_config['batch']
+
+
+class BaseGenerator(Sequence):
     def __init__(self, dataset_name):
         _check_dataset_name(dataset_name)
         self.dataset_name = dataset_name
-        self.catalog = load_catalog(self.dataset_name, 'train')
+        self.catalog = pd.DataFrame()
         self.encoder = load_one_hot(self.dataset_name)
         self.on_epoch_end()
 
@@ -41,7 +40,21 @@ class DataGenerator(Sequence):
         return x, y, sample_weight
 
 
+class DataGenerator(BaseGenerator):
+    def __init__(self, dataset_name):
+        super().__init__(dataset_name)
+        self.catalog = load_catalog(self.dataset_name, 'train')
+
+
+class FoldGenerator(BaseGenerator):
+    def __init__(self, dataset_name, fold):
+        super().__init__(dataset_name)
+        self.fold = fold
+        self.catalog = load_fold(self.dataset_name, 'train', self.fold)
+
+
 def data_loader(dataset_name, set_type):
+    assert set_type in ['whole', 'train', 'valid', 'evalu'], 'Invalid set type'
     catalog = load_catalog(dataset_name, set_type)
     encoder = load_one_hot(dataset_name)
     print(f'{datetime.now()} Loading {dataset_name} {set_type} set')
@@ -52,24 +65,22 @@ def data_loader(dataset_name, set_type):
 
 
 def fold_loader(dataset_name, set_type, fold):
-    fold_dict = load_fold(dataset_name, fold)
-    train_catalog, valid_catalog = fold_dict['train'], fold_dict['valid']
+    assert set_type in ['train', 'valid'], 'Invalid set type'
+    catalog = load_fold(dataset_name, set_type, fold)
     encoder = load_one_hot(dataset_name)
-    print(f'{datetime.now()} Loading {dataset_name} fold {fold}')
-    x_train, y_train_spar = load_xy(dataset_name, train_catalog)
-    x_valid, y_valid_spar = load_xy(dataset_name, valid_catalog)
-    y_train = encoder.transform(y_train_spar).toarray()
-    y_valid = encoder.transform(y_valid_spar).toarray()
+    print(f'{datetime.now()} Loading {dataset_name} {set_type} set fold {fold}')
+    x, y_spar = load_xy(dataset_name, catalog)
+    y = encoder.transform(y_spar).toarray()
 
-    return (x_train, y_train), (x_valid, y_valid)
+    return x, y
+
+
+def resample():
+    pass
 
 
 def _check_dataset_name(dataset_name):
     assert dataset_name.split('_')[0] in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'OGLE', 'Synthesis'], 'Invalid dataset name'
-
-
-def _check_set_type(set_type):
-    assert set_type in ['whole', 'train', 'valid', 'evalu'], 'Invalid set type'
 
 
 if __name__ == '__main__':
