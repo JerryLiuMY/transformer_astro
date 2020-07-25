@@ -17,10 +17,12 @@ metrics = [
 ]
 
 train_config = {
-    "generator": True,
+    "use_gen": True,
     "epoch": 20,
-    "batch": 128,
     "metrics": metrics,
-    "kfold": 5,
+    "batch": 128
 }
 
+evalu_config = {
+    "kfold": 10
+}

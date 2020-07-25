@@ -8,11 +8,11 @@ from tensorflow.python.keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import StratifiedKFold
 from global_settings import DATA_FOLDER
 from config.data_config import data_config
-from config.train_config import train_config
+from config.exec_config import evalu_config
 
 window, stride = data_config['window'], data_config['stride']
 max_len, sample = data_config['max_len'], data_config['sample']
-kfold = train_config['kfold']
+kfold = evalu_config['kfold']
 
 
 def load_catalog(dataset_name, set_type):
@@ -94,6 +94,15 @@ def processing(data_df):
     return dtdm_bin
 
 
+def new_dir(log_dir):
+    past_dirs = next(os.walk(log_dir))[1]
+    new_num = 0 if len(past_dirs) == 0 else np.max([int(past_dir.split('_')[-1]) for past_dir in past_dirs]) + 1
+    exp_dir = os.path.join(log_dir, '_'.join(['experiment', str(new_num)]))
+    os.mkdir(exp_dir)
+
+    return exp_dir
+
+
 def _dump_one_hot(dataset_name):
     catalog = load_catalog(dataset_name, 'whole')
     _, y_spar = load_xy(dataset_name, catalog)
@@ -102,12 +111,3 @@ def _dump_one_hot(dataset_name):
 
     with open(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'), 'wb') as handle:
         pickle.dump(encoder, handle)
-
-
-def new_dir(log_dir):
-    past_dirs = next(os.walk(log_dir))[1]
-    new_num = 0 if len(past_dirs) == 0 else np.max([int(past_dir.split('_')[-1]) for past_dir in past_dirs]) + 1
-    exp_dir = os.path.join(log_dir, '_'.join(['experiment', str(new_num)]))
-    os.mkdir(exp_dir)
-
-    return exp_dir
