@@ -6,17 +6,11 @@ from tensorflow.keras.models import Sequential
 from tools.utils import load_one_hot
 from config.data_config import data_config
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
-from config.exec_config import train_config
-from tools.data_tools import fold_loader
-from tools.data_tools import FoldGenerator
 
 window = data_config['window']
-use_gen, epoch = train_config['use_gen'], train_config['epoch']
-batch, metrics = train_config['batch'], train_config['metrics']
-metric_names = ['epoch_loss'] + ['_'.join(['epoch', _.name]) for _ in metrics]
 
 
-class Basic(Base):
+class SimpleGRU(Base):
 
     def __init__(self, dataset_name, hyper_param, exp_dir):
         super().__init__(dataset_name, hyper_param, exp_dir)
@@ -39,7 +33,7 @@ class Basic(Base):
         self.model = model
 
 
-class FoldBasic(Basic, FoldBase):
+class FoldBasic(SimpleGRU, FoldBase):
 
     def __init__(self, dataset_name, hyper_param, exp_dir, fold):
         FoldBase.__init__(self, dataset_name, hyper_param, exp_dir, fold)
