@@ -19,8 +19,8 @@ metrics = [
 train_config = {
     "use_gen": False,
     "epoch": 200,
+    "batch": 128,
     "metrics": metrics,
-    "batch": 128
 }
 
 evalu_config = {
