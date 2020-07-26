@@ -75,10 +75,6 @@ def fold_loader(dataset_name, set_type, fold):
     return x, y
 
 
-def resample():
-    pass
-
-
 def _check_dataset_name(dataset_name):
     assert dataset_name.split('_')[0] in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'OGLE', 'Synthesis'], 'Invalid dataset name'
 

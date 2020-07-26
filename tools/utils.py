@@ -9,7 +9,8 @@ from sklearn.model_selection import StratifiedKFold
 from global_settings import DATA_FOLDER
 from config.data_config import data_config
 from config.exec_config import evalu_config
-from tqdm import tqdm
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.over_sampling import RandomOverSampler
 
 window, stride = data_config['window'], data_config['stride']
 max_len, sample = data_config['max_len'], data_config['sample']
@@ -18,29 +19,26 @@ kfold = evalu_config['kfold']
 
 def load_catalog(dataset_name, set_type):
     catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
-    whole_catalog, train_catalog = pd.DataFrame(), pd.DataFrame()
+    whole_catalog, unbal_catalog = pd.DataFrame(), pd.DataFrame()
     valid_catalog, evalu_catalog = pd.DataFrame(), pd.DataFrame()
 
     # TODO: WISE need to drop some categories
-
-    for cat in sorted(set(catalog['Class'])):
+    cats = sorted(set(catalog['Class']))
+    for cat in cats:
         catalog_ = catalog[catalog['Class'] == cat].reset_index(drop=True, inplace=False)
         catalog_ = sklearn.utils.shuffle(catalog_, random_state=0); size_ = np.shape(catalog_)[0]
         whole_catalog = pd.concat([whole_catalog, catalog_])
-        train_catalog = pd.concat([train_catalog, catalog_.iloc[:int(size_ * 0.7), :]])
+        unbal_catalog = pd.concat([unbal_catalog, catalog_.iloc[:int(size_ * 0.7), :]])
         valid_catalog = pd.concat([valid_catalog, catalog_.iloc[int(size_ * 0.7): int(size_ * 0.8), :]])
         evalu_catalog = pd.concat([evalu_catalog, catalog_.iloc[int(size_ * 0.8):, :]])
 
-    # This step is re-sampling
-    # train_catalog = pd.DataFrame()
-    # for cat in sorted(set(unbal_catalog['Class'])):
-    #     np.random.seed(1)
-    #     train_catalog_ = unbal_catalog[unbal_catalog['Class'] == cat].reset_index(drop=True, inplace=False)
-    #     train_catalog_ = train_catalog_.loc[choice(train_catalog_.index, sample, replace=True)]# TODO: Change to False
-    #     train_catalog = pd.concat([train_catalog, train_catalog_])
+    # ros = RandomOverSampler(sampling_strategy='auto', random_state=1)
+    # rus = RandomUnderSampler(sampling_strategy={cat: sample for cat in cats}, random_state=1)
+    # unbal_catalog, _ = ros.fit_resample(unbal_catalog, unbal_catalog['Class'])
+    # train_catalog, _ = rus.fit_resample(unbal_catalog, unbal_catalog['Class'])
 
     catalog_dict = {'whole': whole_catalog.reset_index(drop=True),
-                    'train': train_catalog.reset_index(drop=True),
+                    'train': unbal_catalog.reset_index(drop=True),
                     'valid': valid_catalog.reset_index(drop=True),
                     'evalu': evalu_catalog.reset_index(drop=True)}
 

@@ -133,6 +133,8 @@ class Base:
                 max_queue_size=10, workers=5
             )
 
+        self.model.save(path)
+
 
 class FoldBase(Base):
 
@@ -147,6 +149,7 @@ class FoldBase(Base):
             self.train = FoldGenerator(self.dataset_name, self.fold)
         self.x_valid, self.y_valid = fold_loader(self.dataset_name, 'valid', self.fold)
         self.x_evalu, self.y_evalu = self.x_valid.copy(), self.y_valid.copy()
+
 
 # over & under sampling
 # regularization -- bias and variance trade off / terminate training after loss stabilize
