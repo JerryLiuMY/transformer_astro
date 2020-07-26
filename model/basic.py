@@ -1,12 +1,14 @@
 import numpy as np
 import tensorflow as tf
-from model.base import Base, FoldBase
+from model.base import Base
 from tensorflow.keras.layers import GRU, Dropout, Dense
 from tensorflow.keras.models import Sequential
 from tools.utils import load_one_hot
 from config.data_config import data_config
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config
+from tools.data_tools import fold_loader
+from tools.data_tools import FoldGenerator
 
 window = data_config['window']
 use_gen, epoch = train_config['use_gen'], train_config['epoch']
@@ -20,32 +22,35 @@ class Basic(Base):
         super().__init__(dataset_name, hyper_param, exp_dir)
 
     def build(self):
-        self.model = build(self.dataset_name, self.hyper_param)
+        model = Sequential()
+        model.add(tf.keras.layers.Masking(mask_value=0.0, dtype=np.float32, input_shape=(None, window * 2)))
+
+        for _ in range(self.hyper_param[rnn_nums_hp]):
+            foo = True if _ == 0 and self.hyper_param[rnn_nums_hp] >= 2 else False
+            model.add(GRU(units=self.hyper_param[rnn_dims_hp], return_sequences=foo))
+
+        for _ in range(self.hyper_param[dnn_nums_hp]):
+            model.add(Dense(units=self.hyper_param[rnn_dims_hp] * 2, activation='tanh'))
+            model.add(Dropout(rate=0.4))
+
+        encoder = load_one_hot(self.dataset_name)
+        model.add(Dense(len(encoder.categories_[0]), activation='softmax'))
+
+        self.model = model
 
 
-class FoldBasic(FoldBase):
+class FoldBasic(Basic):
 
     def __init__(self, dataset_name, hyper_param, exp_dir, fold):
-        super().__init__(dataset_name, hyper_param, exp_dir, fold)
+        self.fold = fold
+        super().__init__(dataset_name, hyper_param, exp_dir)
 
-    def build(self):
-        self.model = build(self.dataset_name, self.hyper_param)
+    def _load_data(self):
+        if not use_gen:
+            self.train = fold_loader(self.dataset_name, 'train', self.fold)
+        else:
+            self.train = FoldGenerator(self.dataset_name, self.fold)
+        self.x_valid, self.y_valid = fold_loader(self.dataset_name, 'valid', self.fold)
+        self.x_evalu, self.y_evalu = self.x_valid.copy(), self.y_valid.copy()
 
-
-def build(dataset_name, hyper_param):
-    model = Sequential()
-    model.add(tf.keras.layers.Masking(mask_value=0.0, dtype=np.float32, input_shape=(None, window * 2)))
-
-    for _ in range(hyper_param[rnn_nums_hp]):
-        foo = True if _ == 0 and hyper_param[rnn_nums_hp] >= 2 else False
-        model.add(GRU(units=hyper_param[rnn_dims_hp], return_sequences=foo))
-
-    for _ in range(hyper_param[dnn_nums_hp]):
-        model.add(Dense(units=hyper_param[rnn_dims_hp] * 2, activation='tanh'))
-        model.add(Dropout(rate=0.4))
-
-    encoder = load_one_hot(dataset_name)
-    model.add(Dense(len(encoder.categories_[0]), activation='softmax'))
-
-    return model
 

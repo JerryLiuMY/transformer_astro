@@ -9,6 +9,7 @@ from sklearn.model_selection import StratifiedKFold
 from global_settings import DATA_FOLDER
 from config.data_config import data_config
 from config.exec_config import evalu_config
+from tqdm import tqdm
 
 window, stride = data_config['window'], data_config['stride']
 max_len, sample = data_config['max_len'], data_config['sample']
