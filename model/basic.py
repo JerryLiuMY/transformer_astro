@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from model.base import Base
+from model.base import Base, FoldBase
 from tensorflow.keras.layers import GRU, Dropout, Dense
 from tensorflow.keras.models import Sequential
 from tools.utils import load_one_hot
@@ -39,18 +39,7 @@ class Basic(Base):
         self.model = model
 
 
-class FoldBasic(Basic):
+class FoldBasic(Basic, FoldBase):
 
     def __init__(self, dataset_name, hyper_param, exp_dir, fold):
-        self.fold = fold
-        super().__init__(dataset_name, hyper_param, exp_dir)
-
-    def _load_data(self):
-        if not use_gen:
-            self.train = fold_loader(self.dataset_name, 'train', self.fold)
-        else:
-            self.train = FoldGenerator(self.dataset_name, self.fold)
-        self.x_valid, self.y_valid = fold_loader(self.dataset_name, 'valid', self.fold)
-        self.x_evalu, self.y_evalu = self.x_valid.copy(), self.y_valid.copy()
-
-
+        FoldBase.__init__(self, dataset_name, hyper_param, exp_dir, fold)

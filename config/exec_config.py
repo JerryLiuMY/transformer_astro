@@ -17,7 +17,7 @@ metrics = [
 ]
 
 train_config = {
-    "use_gen": True,
+    "use_gen": False,
     "epoch": 200,
     "metrics": metrics,
     "batch": 128
