@@ -17,12 +17,12 @@ def run(dataset_name):
         hyper_param = {rnn_nums_hp: rnn_num, rnn_dims_hp: rnn_dim, dnn_nums_hp: dnn_num}
         exp = Basic(dataset_name=dataset_name, hyper_param=hyper_param, exp_dir=exp_dir)
         exp.build()
-        exp.train()
+        exp.run()
 
 
 def run_fold(dataset_name, hyper_param):
-    for fold in range(kfold):
+    for fold in map(str, range(0, 10)):
         exp_dir = os.path.join(DATA_FOLDER, f'{dataset_name}_fold', f'fold_{fold}'); os.mkdir(exp_dir)
-        fold = FoldBasic(dataset_name=dataset_name, hyper_param=hyper_param, exp_dir=exp_dir, fold=fold)
-        fold.build()
-        fold.train()
+        fold_exp = FoldBasic(dataset_name=dataset_name, hyper_param=hyper_param, exp_dir=exp_dir, fold=fold)
+        fold_exp.build()
+        fold_exp.run()

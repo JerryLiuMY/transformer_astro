@@ -67,12 +67,9 @@ class Base:
         self.hyp_path = os.path.join(self.hyp_dir, self.exp_name)
 
     def _load_data(self):
+        self.train = data_loader(self.dataset_name, 'train') if not use_gen else DataGenerator(self.dataset_name)
         self.x_valid, self.y_valid = data_loader(self.dataset_name, 'valid')
         self.x_evalu, self.y_evalu = data_loader(self.dataset_name, 'evalu')
-        if not use_gen:
-            self.train = data_loader(self.dataset_name, 'train')
-        else:
-            self.train = DataGenerator(self.dataset_name)
 
     @staticmethod
     def _lnr_schedule(step):
@@ -109,7 +106,7 @@ class Base:
         model = None
         self.model = model
 
-    def train(self):
+    def run(self):
         self.model.compile(
             loss='categorical_crossentropy',
             optimizer='adam',
@@ -140,17 +137,16 @@ class Base:
 class FoldBase(Base):
 
     def __init__(self, dataset_name, hyper_param, exp_dir, fold):
-        super().__init__(dataset_name, hyper_param, exp_dir)
         self.fold = fold
+        super().__init__(dataset_name, hyper_param, exp_dir)
 
     def _load_data(self):
-        self.x_valid, self.y_valid = fold_loader(self.dataset_name, 'valid', self.fold)
-        self.x_evalu, self.y_evalu = fold_loader(self.dataset_name, 'evalu', self.fold)
         if not use_gen:
             self.train = fold_loader(self.dataset_name, 'train', self.fold)
         else:
             self.train = FoldGenerator(self.dataset_name, self.fold)
-
+        self.x_valid, self.y_valid = fold_loader(self.dataset_name, 'valid', self.fold)
+        self.x_evalu, self.y_evalu = self.x_valid.copy(), self.y_valid.copy()
 
 # over & under sampling
 # regularization -- bias and variance trade off / terminate training after loss stabilize

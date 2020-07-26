@@ -54,7 +54,7 @@ class FoldGenerator(BaseGenerator):
 
 
 def data_loader(dataset_name, set_type):
-    assert set_type in ['whole', 'train', 'valid', 'evalu'], 'Invalid set type'
+    assert set_type in ['train', 'valid', 'evalu'], 'Invalid set type'
     catalog = load_catalog(dataset_name, set_type)
     encoder = load_one_hot(dataset_name)
     print(f'{datetime.now()} Loading {dataset_name} {set_type} set')
