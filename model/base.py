@@ -5,6 +5,7 @@ from sklearn.utils import class_weight
 from sklearn.metrics import confusion_matrix
 from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
+from tensorflow.keras.backend import clear_session
 from tensorboard.plugins.hparams import api as hp
 from datetime import datetime
 from tools.data_tools import data_loader, fold_loader
@@ -13,6 +14,7 @@ from tools.utils import load_one_hot
 from tools.exec_tools import plot_confusion, plot_to_image
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config
+
 
 use_gen, epoch = train_config['use_gen'], train_config['epoch']
 metrics, batch = train_config['metrics'], train_config['batch']
@@ -30,6 +32,7 @@ def log_params(exp_dir):
 class Base:
 
     def __init__(self, dataset_name, hyper_param, exp_dir):
+        clear_session()
         self.dataset_name = dataset_name
         self.hyper_param = hyper_param
         self.exp_dir = exp_dir
@@ -149,9 +152,9 @@ class FoldBase(Base):
         self.x_evalu, self.y_evalu = self.x_valid.copy(), self.y_valid.copy()
 
 
-# regularization -- bias and variance trade off / terminate training after loss stabilize
-# what regularization to use?
+# regularization -- bias and variance trade off
 # is regularization preferred over dropout
+# Early stop
 
 # attention model
 # Phased LSTM

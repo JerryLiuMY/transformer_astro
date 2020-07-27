@@ -4,6 +4,7 @@ from model.base import Base, FoldBase
 from tensorflow.keras.layers import GRU, Dropout, Dense
 from tensorflow.keras.models import Sequential
 from tools.utils import load_one_hot
+from tensorflow.keras import regularizers
 from config.data_config import data_config
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 
@@ -21,11 +22,13 @@ class SimpleGRU(Base):
 
         for _ in range(self.hyper_param[rnn_nums_hp]):
             foo = True if _ == 0 and self.hyper_param[rnn_nums_hp] >= 2 else False
-            model.add(GRU(units=self.hyper_param[rnn_dims_hp], return_sequences=foo))
+            model.add(GRU(units=self.hyper_param[rnn_dims_hp], return_sequences=foo,
+                          recurrent_regularizer=regularizers.l2(0.05)))
 
         for _ in range(self.hyper_param[dnn_nums_hp]):
-            model.add(Dense(units=self.hyper_param[rnn_dims_hp] * 2, activation='tanh'))
-            model.add(Dropout(rate=0.4))
+            model.add(Dense(units=self.hyper_param[rnn_dims_hp] * 2, activation='tanh',
+                            kernel_regularizer=regularizers.l2(0.05)))
+            model.add(Dropout(rate=0.2))
 
         encoder = load_one_hot(self.dataset_name)
         model.add(Dense(len(encoder.categories_[0]), activation='softmax'))

@@ -32,13 +32,13 @@ def load_catalog(dataset_name, set_type):
         valid_catalog = pd.concat([valid_catalog, catalog_.iloc[int(size_ * 0.7): int(size_ * 0.8), :]])
         evalu_catalog = pd.concat([evalu_catalog, catalog_.iloc[int(size_ * 0.8):, :]])
 
-    # ros = RandomOverSampler(sampling_strategy='auto', random_state=1)
-    # rus = RandomUnderSampler(sampling_strategy={cat: sample for cat in cats}, random_state=1)
-    # unbal_catalog, _ = ros.fit_resample(unbal_catalog, unbal_catalog['Class'])
-    # train_catalog, _ = rus.fit_resample(unbal_catalog, unbal_catalog['Class'])
+    ros = RandomOverSampler(sampling_strategy='auto', random_state=1)
+    rus = RandomUnderSampler(sampling_strategy={cat: sample for cat in cats}, random_state=1)
+    unbal_catalog, _ = ros.fit_resample(unbal_catalog, unbal_catalog['Class'])
+    train_catalog, _ = rus.fit_resample(unbal_catalog, unbal_catalog['Class'])
 
     catalog_dict = {'whole': whole_catalog.reset_index(drop=True),
-                    'train': unbal_catalog.reset_index(drop=True),
+                    'train': train_catalog.reset_index(drop=True),
                     'valid': valid_catalog.reset_index(drop=True),
                     'evalu': evalu_catalog.reset_index(drop=True)}
 
