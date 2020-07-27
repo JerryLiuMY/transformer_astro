@@ -10,7 +10,7 @@ from datetime import datetime
 from tools.data_tools import data_loader, fold_loader
 from tools.data_tools import DataGenerator, FoldGenerator
 from tools.utils import load_one_hot
-from tools.model_tools import plot_confusion, plot_to_image
+from tools.exec_tools import plot_confusion, plot_to_image
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config
 
@@ -75,7 +75,7 @@ class Base:
     def _lnr_schedule(step):
         begin_rate = 0.001
         decay_rate = 0.7
-        decay_step = 250
+        decay_step = 50
 
         learn_rate = begin_rate * np.power(decay_rate, np.divmod(step, decay_step)[0])
         tf.summary.scalar('learning Rate', data=learn_rate, step=step)
