@@ -153,7 +153,8 @@ class FoldBase(Base):
 
 
 # regularization -- bias and variance trade off
-# is regularization preferred over dropout
+# regularization vs. dropout
+# regularize kenel or recurrent layers
 # Early stop
 
 # attention model
