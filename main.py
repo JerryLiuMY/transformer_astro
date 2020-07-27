@@ -26,3 +26,7 @@ def run_fold(dataset_name, hyper_param):
         fold_exp = FoldBasic(dataset_name=dataset_name, hyper_param=hyper_param, exp_dir=exp_dir, fold=fold)
         fold_exp.build()
         fold_exp.run()
+
+
+if __name__ == '__main__':
+    run('ASAS')
