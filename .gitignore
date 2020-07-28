@@ -13,3 +13,4 @@ venv/
 .floydignore
 floyd.yml
 floyd_requirements.txt
+*.txt
