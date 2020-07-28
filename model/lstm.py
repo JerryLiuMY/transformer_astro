@@ -21,7 +21,8 @@ class SimpleLSTM(Base):
         model.add(tf.keras.layers.Masking(mask_value=0.0, dtype=np.float32, input_shape=(None, window * 2)))
 
         for _ in range(self.hyper_param[rnn_nums_hp]):
-            foo = True if _ == 0 and self.hyper_param[rnn_nums_hp] >= 2 else False
+            rnn_num = self.hyper_param[rnn_nums_hp]
+            foo = True if _ < rnn_num - 1 else False
             model.add(LSTM(units=self.hyper_param[rnn_dims_hp], return_sequences=foo,
                            recurrent_regularizer=regularizers.l2(0.05)))
 

@@ -12,3 +12,4 @@ venv/
 .floydexpt
 .floydignore
 floyd.yml
+floyd_requirements.txt
