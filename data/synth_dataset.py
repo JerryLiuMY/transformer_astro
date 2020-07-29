@@ -39,11 +39,11 @@ def build_catalog(catalog, cat):
 def new_synth_dir():
     synth_now = 0
     for _ in next(os.walk(DATA_FOLDER))[1]:
-        if len(_.split('_')) == 2 and _.split('_')[0] == 'Synthesis':
+        if len(_.split('_')) == 2 and _.split('_')[0] == 'SYNTHESIS':
             synth_now_ = int(_.split('_')[1])
             synth_now = synth_now_ if synth_now_ > synth_now else synth_now
 
-    synth_dir = os.path.join(DATA_FOLDER, '_'.join(['Synthesis', str(synth_now + 1)]))
+    synth_dir = os.path.join(DATA_FOLDER, '_'.join(['SYNTHESIS', str(synth_now + 1)]))
     os.mkdir(synth_dir)
     os.mkdir(os.path.join(synth_dir, 'LCs'))
 
