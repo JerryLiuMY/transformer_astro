@@ -151,12 +151,8 @@ class FoldBase(Base):
         self.x_valid, self.y_valid = fold_loader(self.dataset_name, 'valid', self.fold)
         self.x_evalu, self.y_evalu = self.x_valid.copy(), self.y_valid.copy()
 
-
-# regularization -- bias and variance trade off
-# regularization vs. dropout
-# regularize kenel or recurrent layers
-# Early stop
-
+#
+# early stop
 # attention model
 # Phased LSTM
 

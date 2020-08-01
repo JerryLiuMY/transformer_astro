@@ -11,6 +11,8 @@ from config.data_config import data_config
 from config.exec_config import evalu_config
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
+from sklearn.preprocessing import MinMaxScaler
+from tqdm import tqdm_notebook
 
 window, stride = data_config['window'], data_config['stride']
 max_len, sample = data_config['max_len'], data_config['sample']
@@ -75,7 +77,7 @@ def load_xy(dataset_name, catalog):
     for cat, path in list(zip(cats, paths)):
         data_df = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, path))
         x.append(processing(data_df)); y_spar.append([cat])
-    x = pad_sequences(x, value=0.0, dtype=np.float64, maxlen=max_len, truncating='post', padding='post')
+    x = pad_sequences(x, value=-10, dtype=np.float32, maxlen=max_len, truncating='post', padding='post')
     x, y_spar = np.array(x), np.array(y_spar)
 
     return x, y_spar
@@ -84,9 +86,15 @@ def load_xy(dataset_name, catalog):
 def processing(data_df):
     data_df.sort_values(by=['mjd'], inplace=True)
     data_df.reset_index(drop=True, inplace=True)
-    mjd, mag = np.diff(data_df['mjd'].values).reshape(-1, 1), np.diff(data_df['mag'].values).reshape(-1, 1)
-    dtdm_org = np.concatenate([mjd, mag], axis=1)
-    dtdm_bin = np.array([], dtype=np.int64).reshape(0, 2 * window)
+
+    scaler = MinMaxScaler(feature_range=(0, 30))
+    scaler.fit(data_df['mag'].values.reshape(-1, 1))
+    mjd = data_df['mjd'].values.reshape(-1, 1)
+    mag = scaler.transform(data_df['mag'].values.reshape(-1, 1))
+    mjd_diff, mag_diff = np.diff(mjd, axis=0), np.diff(mag, axis=0)
+
+    dtdm_org = np.concatenate([mjd_diff, mag_diff], axis=1)
+    dtdm_bin = np.array([], dtype=np.float32).reshape(0, 2 * window)
     for i in range(0, np.shape(dtdm_org)[0] - (window - 1), stride):
         dtdm_bin = np.vstack([dtdm_bin, dtdm_org[i: i + window, :].reshape(-1)])
 
@@ -110,3 +118,17 @@ def _dump_one_hot(dataset_name):
 
     with open(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'), 'wb') as handle:
         pickle.dump(encoder, handle)
+
+
+def _dump_scaler(dataset_name, feature_range=(0, 30)):
+    catalog = load_catalog(dataset_name, 'whole')
+    cats, paths = list(catalog['Class']), list(catalog['Path'])
+    mag_full = np.array([])
+    for cat, path in tqdm_notebook(list(zip(cats, paths))):
+        data_df = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, path))
+        mag_full = np.append(mag_full, np.array(data_df['mag']))
+    scaler = MinMaxScaler(feature_range=feature_range)
+    scaler.fit(mag_full.reshape(-1, 1))
+
+    with open(os.path.join(DATA_FOLDER, dataset_name, 'scaler.pkl'), 'wb') as handle:
+        pickle.dump(scaler, handle)

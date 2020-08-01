@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from model.base import Base, FoldBase
-from tensorflow.keras.layers import GRU, Dropout, Dense, LSTM
+from tensorflow.keras.layers import LSTM, Dense, ReLU, BatchNormalization, Dropout
 from tensorflow.keras.models import Sequential
 from tools.utils import load_one_hot
 from tensorflow.keras import regularizers
@@ -18,7 +18,7 @@ class SimpleLSTM(Base):
 
     def build(self):
         model = Sequential()
-        model.add(tf.keras.layers.Masking(mask_value=0.0, dtype=np.float32, input_shape=(None, window * 2)))
+        model.add(tf.keras.layers.Masking(mask_value=-10, dtype=np.float32, input_shape=(None, window * 2)))
 
         for _ in range(self.hyper_param[rnn_nums_hp]):
             rnn_num = self.hyper_param[rnn_nums_hp]
@@ -27,9 +27,10 @@ class SimpleLSTM(Base):
                            recurrent_regularizer=regularizers.l2(0.05)))
 
         for _ in range(self.hyper_param[dnn_nums_hp]):
-            model.add(Dense(units=self.hyper_param[rnn_dims_hp] * 2, activation='relu',
+            model.add(Dense(units=self.hyper_param[rnn_dims_hp] * 2,
                             kernel_regularizer=regularizers.l2(0.05)))
-            model.add(Dropout(rate=0.2))
+            model.add(BatchNormalization())
+            model.add(ReLU())
 
         encoder = load_one_hot(self.dataset_name)
         model.add(Dense(len(encoder.categories_[0]), activation='softmax'))
