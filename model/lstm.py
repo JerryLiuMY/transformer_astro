@@ -1,7 +1,8 @@
 import numpy as np
 import tensorflow as tf
 from model.base import Base, FoldBase
-from tensorflow.keras.layers import LSTM, Dense, ReLU, BatchNormalization, Dropout
+from tensorflow.keras.layers import LSTM, Dense, ReLU, Dropout
+from tensorflow.keras.layers import BatchNormalization, GlobalAveragePooling1D, TimeDistributed
 from tensorflow.keras.models import Sequential
 from tools.utils import load_one_hot
 from tensorflow.keras import regularizers
@@ -21,18 +22,25 @@ class SimpleLSTM(Base):
         model.add(tf.keras.layers.Masking(mask_value=-10, dtype=np.float32, input_shape=(None, window * 2)))
 
         for _ in range(self.hyper_param[rnn_nums_hp]):
-            rnn_num = self.hyper_param[rnn_nums_hp]
-            foo = True if _ < rnn_num - 1 else False
-            model.add(LSTM(units=self.hyper_param[rnn_dims_hp], return_sequences=foo,
-                           recurrent_regularizer=regularizers.l2(0.05)))
+            # rnn_num = self.hyper_param[rnn_nums_hp]
+            # foo = True if _ < rnn_num - 1 else False
+            foo = True
+            model.add(LSTM(
+                units=self.hyper_param[rnn_dims_hp], return_sequences=foo,
+                recurrent_regularizer=regularizers.l2(0.07))
+            )
 
         for _ in range(self.hyper_param[dnn_nums_hp]):
-            model.add(Dense(units=self.hyper_param[rnn_dims_hp] * 2,
-                            kernel_regularizer=regularizers.l2(0.05)))
+            model.add(TimeDistributed(Dense(
+                units=self.hyper_param[rnn_dims_hp] * 2,
+                kernel_regularizer=regularizers.l2(0.07)))
+            )
             model.add(BatchNormalization())
             model.add(ReLU())
+            model.add(Dropout(rate=0.2))
 
         encoder = load_one_hot(self.dataset_name)
+        model.add(GlobalAveragePooling1D(data_format='channels_last'))
         model.add(Dense(len(encoder.categories_[0]), activation='softmax'))
 
         self.model = model
