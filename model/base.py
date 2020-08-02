@@ -2,7 +2,7 @@ import os
 import numpy as np
 import tensorflow as tf
 from sklearn.utils import class_weight
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, classification_report
 from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorflow.keras.backend import clear_session
@@ -90,13 +90,13 @@ class Base:
         y_predi = tf.one_hot(max_arg, depth=len(self.categories)).numpy()
         y_valid_spar = self.encoder.inverse_transform(self.y_valid)
         y_predi_spar = self.encoder.inverse_transform(y_predi)
-        matrix = confusion_matrix(y_valid_spar, y_predi_spar, labels=self.categories)  # TODO: normalize='true'
-        matrix = np.around(matrix, decimals=2)
-        confusion_figure = plot_confusion(matrix, categories=self.categories)
-        confusion_image = plot_to_image(confusion_figure)
+        matrix = np.around(confusion_matrix(y_valid_spar, y_predi_spar, labels=self.categories), decimals=2)
+        report = classification_report(y_valid_spar, y_predi_spar, labels=self.categories)
+        confusion_fig = plot_confusion(matrix, report, categories=self.categories)
+        confusion_img = plot_to_image(confusion_fig)
 
         with tf.summary.create_file_writer(self.img_path).as_default():
-            tf.summary.image('Confusion Matrix', confusion_image, step=step)
+            tf.summary.image('Confusion Matrix', confusion_img, step=step)
 
     def _log_evalu(self, logs=None):
         performances = self.model.evaluate(x=self.x_evalu, y=self.y_evalu)
@@ -151,7 +151,8 @@ class FoldBase(Base):
         self.x_valid, self.y_valid = fold_loader(self.dataset_name, 'valid', self.fold)
         self.x_evalu, self.y_evalu = self.x_valid.copy(), self.y_valid.copy()
 
-#
+# F1 score
+# sliding window sampling
 # early stop
 # attention model
 # Phased LSTM
