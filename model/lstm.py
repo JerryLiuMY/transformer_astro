@@ -9,7 +9,7 @@ from tensorflow.keras import regularizers
 from config.data_config import data_config
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 
-window = data_config['window']
+(w, s) = data_config['ws']
 
 
 class SimpleLSTM(Base):
@@ -19,7 +19,7 @@ class SimpleLSTM(Base):
 
     def build(self):
         model = Sequential()
-        model.add(tf.keras.layers.Masking(mask_value=-10, dtype=np.float32, input_shape=(None, window * 2)))
+        model.add(tf.keras.layers.Masking(mask_value=np.pi, dtype=np.float32, input_shape=(None, w * 2)))
 
         for _ in range(self.hyper_param[rnn_nums_hp]):
             # rnn_num = self.hyper_param[rnn_nums_hp]
