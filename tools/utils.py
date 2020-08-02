@@ -87,10 +87,10 @@ def processing(data_df):
     data_df.sort_values(by=['mjd'], inplace=True)
     data_df.reset_index(drop=True, inplace=True)
 
+    mjd = data_df['mjd'].values.reshape(-1, 1)
     scaler = MinMaxScaler(feature_range=(0, 30))
     scaler.fit(data_df['mag'].values.reshape(-1, 1))
     mag = scaler.transform(data_df['mag'].values.reshape(-1, 1))
-    mjd = data_df['mjd'].values.reshape(-1, 1)
     mjd_diff, mag_diff = np.diff(mjd, axis=0), np.diff(mag, axis=0)
 
     dtdm_org = np.concatenate([mjd_diff, mag_diff], axis=1)

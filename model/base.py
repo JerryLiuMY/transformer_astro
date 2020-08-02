@@ -91,7 +91,7 @@ class Base:
         y_valid_spar = self.encoder.inverse_transform(self.y_valid)
         y_predi_spar = self.encoder.inverse_transform(y_predi)
         matrix = np.around(confusion_matrix(y_valid_spar, y_predi_spar, labels=self.categories), decimals=2)
-        report = classification_report(y_valid_spar, y_predi_spar, labels=self.categories)
+        report = classification_report(y_valid_spar, y_predi_spar, labels=self.categories, zero_division=0)
         confusion_fig = plot_confusion(matrix, report, categories=self.categories)
         confusion_img = plot_to_image(confusion_fig)
 
@@ -151,7 +151,6 @@ class FoldBase(Base):
         self.x_valid, self.y_valid = fold_loader(self.dataset_name, 'valid', self.fold)
         self.x_evalu, self.y_evalu = self.x_valid.copy(), self.y_valid.copy()
 
-# F1 score
 # sliding window sampling
 # early stop
 # attention model
