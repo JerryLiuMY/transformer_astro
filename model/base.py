@@ -86,12 +86,12 @@ class Base:
         return learn_rate
 
     def _log_confusion(self, step, logs=None):
-        max_arg = tf.math.argmax(self.model.predict(self.x_valid), axis=1)
+        max_arg = tf.math.argmax(self.model.predict(self.x_evalu), axis=1)
         y_predi = tf.one_hot(max_arg, depth=len(self.categories)).numpy()
-        y_valid_spar = self.encoder.inverse_transform(self.y_valid)
+        y_evalu_spar = self.encoder.inverse_transform(self.y_evalu)
         y_predi_spar = self.encoder.inverse_transform(y_predi)
-        matrix = np.around(confusion_matrix(y_valid_spar, y_predi_spar, labels=self.categories), decimals=2)
-        report = classification_report(y_valid_spar, y_predi_spar, labels=self.categories, zero_division=0)
+        matrix = np.around(confusion_matrix(y_evalu_spar, y_predi_spar, labels=self.categories), decimals=2)
+        report = classification_report(y_evalu_spar, y_predi_spar, labels=self.categories, zero_division=0)
         confusion_fig = plot_confusion(matrix, report, categories=self.categories)
         confusion_img = plot_to_image(confusion_fig)
 
@@ -148,10 +148,9 @@ class FoldBase(Base):
             self.train = fold_loader(self.dataset_name, 'train', self.fold)
         else:
             self.train = FoldGenerator(self.dataset_name, self.fold)
-        self.x_valid, self.y_valid = fold_loader(self.dataset_name, 'valid', self.fold)
-        self.x_evalu, self.y_evalu = self.x_valid.copy(), self.y_valid.copy()
+        self.x_evalu, self.y_evalu = fold_loader(self.dataset_name, 'evalu', self.fold)
+        self.x_valid, self.y_valid = self.x_evalu.copy(), self.y_evalu.copy()
 
-# sliding window sampling
 # early stop
 # attention model
 # Phased LSTM

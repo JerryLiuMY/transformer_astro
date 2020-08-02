@@ -1,7 +1,7 @@
 
 data_config = {
-  "window": 2,
-  "stride": 1,
-  "max_len": 400,
+  "window": 200,
+  "stride": 100,
+  "ws": (2, 1),
   "sample": 600,
 }

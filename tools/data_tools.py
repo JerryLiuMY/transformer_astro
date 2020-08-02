@@ -33,7 +33,7 @@ class BaseGenerator(Sequence):
         self.catalog = sklearn.utils.shuffle(self.catalog, random_state=0)
 
     def _data_generation(self, catalog_):
-        x, y_spar = load_xy(self.dataset_name, catalog_)
+        x, y_spar = load_xy(self.dataset_name, 'train', catalog_)
         y = self.encoder.transform(y_spar).toarray()
         sample_weight = class_weight.compute_sample_weight('balanced', y)
 
@@ -58,18 +58,18 @@ def data_loader(dataset_name, set_type):
     catalog = load_catalog(dataset_name, set_type)
     encoder = load_one_hot(dataset_name)
     print(f'{datetime.now()} Loading {dataset_name} {set_type} set')
-    x, y_spar = load_xy(dataset_name, catalog)
+    x, y_spar = load_xy(dataset_name, set_type, catalog)
     y = encoder.transform(y_spar).toarray()
 
     return x, y
 
 
 def fold_loader(dataset_name, set_type, fold):
-    assert set_type in ['train', 'valid'], 'Invalid set type'
+    assert set_type in ['train', 'evalu'], 'Invalid set type'
     catalog = load_fold(dataset_name, set_type, fold)
     encoder = load_one_hot(dataset_name)
     print(f'{datetime.now()} Loading {dataset_name} {set_type} set fold {fold}')
-    x, y_spar = load_xy(dataset_name, catalog)
+    x, y_spar = load_xy(dataset_name, set_type, catalog)
     y = encoder.transform(y_spar).toarray()
 
     return x, y
