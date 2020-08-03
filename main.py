@@ -6,6 +6,7 @@ from model.base import log_params
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from model.lstm import SimpleLSTM, FoldLSTM
 from config.exec_config import evalu_config
+
 kfold = evalu_config['kfold']
 
 
@@ -29,6 +30,4 @@ def run_fold(dataset_name, hyper_param):
 
 
 if __name__ == '__main__':
-    'floyd run'
-    '--data jerryliumy/datasets/lightcurve_data/2:lightcurve_data'
-    'main.py'
+    run('ASAS')

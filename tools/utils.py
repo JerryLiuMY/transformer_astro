@@ -12,7 +12,7 @@ from config.exec_config import evalu_config
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.preprocessing import MinMaxScaler
-from tqdm import tqdm_notebook
+from tqdm import tqdm
 
 window, stride = data_config['window'], data_config['stride']
 (w, s), sample = data_config['ws'], data_config['sample']
@@ -74,7 +74,7 @@ def load_xy(dataset_name, set_type, catalog):
     cats, paths = list(catalog['Class']), list(catalog['Path'])
 
     x, y_spar, drop_count = [], [], 0
-    for cat, path in tqdm_notebook(list(zip(cats, paths))):
+    for cat, path in tqdm(list(zip(cats, paths))):
         data_df = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, path))
         if (set_type != 'evalu') and (np.shape(data_df)[0] >= window):
             x_, y_spar_ = processing(cat, data_df)
@@ -139,7 +139,7 @@ def _dump_scaler(dataset_name, feature_range=(0, 30)):
     catalog = load_catalog(dataset_name, 'whole')
     cats, paths = list(catalog['Class']), list(catalog['Path'])
     mag_full = np.array([])
-    for cat, path in tqdm_notebook(list(zip(cats, paths))):
+    for cat, path in tqdm(list(zip(cats, paths))):
         data_df = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, path))
         mag_full = np.append(mag_full, np.array(data_df['mag']))
     scaler = MinMaxScaler(feature_range=feature_range)

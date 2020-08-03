@@ -152,7 +152,5 @@ class FoldBase(Base):
         self.x_evalu, self.y_evalu = fold_loader(self.dataset_name, 'evalu', self.fold)
         self.x_valid, self.y_valid = self.x_evalu.copy(), self.y_evalu.copy()
 
-# early stop
 # attention model
 # Phased LSTM
-
