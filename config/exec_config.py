@@ -1,6 +1,5 @@
 from tensorflow.keras.metrics import CategoricalAccuracy, Precision, Recall
 from tensorflow.keras.metrics import AUC, TruePositives, FalsePositives, TrueNegatives, FalseNegatives
-from tensorflow_addons.metrics import F1Score
 
 
 metrics = [
