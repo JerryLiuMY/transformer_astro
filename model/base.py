@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn.utils import class_weight
 from sklearn.metrics import confusion_matrix, classification_report
-from tensorflow.keras.callbacks import LearningRateScheduler
+from tensorflow.keras.callbacks import LearningRateScheduler, EarlyStopping
 from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorflow.keras.backend import clear_session
 from tensorboard.plugins.hparams import api as hp
@@ -115,6 +115,7 @@ class Base:
             optimizer='adam',
             metrics=metrics)
 
+        # ear_callback = EarlyStopping(monitor='val_loss', min_delta=0, patience=10, mode='min')
         lnr_callback = LearningRateScheduler(schedule=self._lnr_schedule, verbose=1)
         his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
         img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
