@@ -46,7 +46,7 @@ class SimpleLSTM(Base):
         self.model = model
 
 
-class FoldBasic(SimpleLSTM, FoldBase):
+class FoldLSTM(SimpleLSTM, FoldBase):
 
     def __init__(self, dataset_name, hyper_param, exp_dir, fold):
         FoldBase.__init__(self, dataset_name, hyper_param, exp_dir, fold)
