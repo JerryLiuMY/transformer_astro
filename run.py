@@ -4,6 +4,7 @@ import subprocess
 if FLAG == 'local':
     subprocess.run('python main.py', shell=True)
 elif FLAG == 'floyd':
+    subprocess.run('floyd login', shell=True)
     subprocess.run('floyd init jerryliumy/self_attention_rnn', shell=True)
     pref = 'floyd run'
     deco = '--gpu --env tensorflow-2.2'

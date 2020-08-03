@@ -10,4 +10,4 @@ tensorflow
 tensorboard
 tensorflow_addons
 scikit-learn
-imblearn
+imbalanced-learn==0.7.0
