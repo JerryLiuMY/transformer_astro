@@ -10,7 +10,7 @@ elif FLAG == 'floyd':
     subprocess.run('floyd init jerryliumy/self_attention_rnn', shell=True)
     pref = 'floyd run'
     deco = '--gpu --env tensorflow-2.2'
-    data = f'--data jerryliumy/datasets/{DATASET_NAME}:lightcurve_data'
+    data = f'--data jerryliumy/datasets/{DATASET_NAME.lower()}/1:lightcurve_data'
     command = ' '.join([pref, deco, data, file])
     subprocess.run(command, shell=True)
 else:
