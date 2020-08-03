@@ -1,7 +1,4 @@
-import os
-
-FLAG = 'local'
-assert FLAG in ['local', 'floyd'], 'Invalid FLAG'
+from config.exec_config import FLAG
 
 if FLAG == 'local':
     LOG_FOLDER = '/Users/mingyu/Desktop/log'
@@ -12,6 +9,6 @@ elif FLAG == 'floyd':
     DATA_FOLDER = '/floyd/input/lightcurve_data'
     SYNTHESIS_FOLDER = None
 else:
-    raise AssertionError('Invalid path')
+    raise AssertionError('Invalid FLAG')
 
-os.makedirs(LOG_FOLDER, exist_ok=True)
+# os.makedirs(LOG_FOLDER, exist_ok=True)
