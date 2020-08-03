@@ -6,7 +6,7 @@ if FLAG == 'local':
     SYNTHESIS_FOLDER = '/Volumes/Seagate_2T/synthesis'
 elif FLAG == 'floyd':
     LOG_FOLDER = '/output/log'
-    DATA_FOLDER = '/floyd/input/lightcurve_data'
+    DATA_FOLDER = '/floyd/input'
     SYNTHESIS_FOLDER = None
 else:
     raise AssertionError('Invalid FLAG')

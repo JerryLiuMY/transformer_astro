@@ -1,6 +1,7 @@
 from tensorflow.keras.metrics import CategoricalAccuracy, Precision, Recall
 from tensorflow.keras.metrics import AUC, TruePositives, FalsePositives, TrueNegatives, FalseNegatives
-FLAG = 'floyd'
+
+FLAG = 'floyd'  # ['local', 'floyd']
 DATASET_NAME = 'ASAS'
 
 metrics = [
