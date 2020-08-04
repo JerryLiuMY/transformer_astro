@@ -2,7 +2,8 @@ from config.exec_config import FLAG
 
 if FLAG == 'local':
     LOG_FOLDER = '/Users/mingyu/Desktop/log'
-    DATA_FOLDER = '/Volumes/Seagate_2T/lightcurve_data'
+    # DATA_FOLDER = '/Volumes/Seagate_2T/lightcurve_data'
+    DATA_FOLDER = '/Users/mingyu/Desktop/lightcurve_data'
     SYNTHESIS_FOLDER = '/Volumes/Seagate_2T/synthesis'
 elif FLAG == 'floyd':
     LOG_FOLDER = '/output/log'

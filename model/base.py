@@ -126,13 +126,13 @@ class Base:
             x_train, y_train = self.train
             sample_weight = class_weight.compute_sample_weight('balanced', y_train)
             self.model.fit(
-                x=x_train, y=y_train, sample_weight=sample_weight, batch_size=batch, epochs=epoch, verbose=1,
+                x=x_train, y=y_train, sample_weight=sample_weight, batch_size=batch, epochs=epoch, verbose=2,
                 validation_data=(self.x_valid, self.y_valid), callbacks=callbacks
             )
         else:
             generator = self.train  # (x_train, y_train, sample_weight)
             self.model.fit(
-                x=generator, epochs=epoch, verbose=1,
+                x=generator, epochs=epoch, verbose=2,
                 validation_data=(self.x_valid, self.y_valid), callbacks=callbacks,
                 max_queue_size=10, workers=5
             )
@@ -152,5 +152,11 @@ class FoldBase(Base):
         self.x_evalu, self.y_evalu = fold_loader(self.dataset_name, 'evalu', self.fold)
         self.x_valid, self.y_valid = self.x_evalu.copy(), self.y_evalu.copy()
 
+
+# investigate data len
+# remove very minority set
+# cloud computing
+# data loading speed
+# test set result
 # attention model
 # Phased LSTM
