@@ -2,7 +2,7 @@ from tensorflow.keras.metrics import CategoricalAccuracy, Precision, Recall
 from tensorflow.keras.metrics import AUC, TruePositives, FalsePositives, TrueNegatives, FalseNegatives
 
 FLAG = 'local'  # ['local', 'floyd']
-DATASET_NAME = 'ASAS'
+DATASET_NAME = 'OGLE'
 
 metrics = [
     CategoricalAccuracy(name='accuracy'),

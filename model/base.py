@@ -155,8 +155,6 @@ class FoldBase(Base):
 
 # investigate data len
 # remove very minority set
-# cloud computing
-# data loading speed
 # test set result
 # attention model
 # Phased LSTM
