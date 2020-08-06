@@ -14,10 +14,20 @@ sample = {
   "OGLE": 35000,
 }
 
+window = {
+  "ASAS": 200,
+  "MACHO": 200,
+  "WISE": 20,
+  "GAIA": 10,
+  "OGLE": 200,
+}
+
+stride = {key: int(window[key]/2) for key in window}
+
 data_config = {
   "thresh": thresh,
   "sample": sample,
-  "window": 200,
-  "stride": 100,
+  "window": window,
+  "stride": stride,
   "ws": (2, 1),
 }

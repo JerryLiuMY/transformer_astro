@@ -81,8 +81,8 @@ def load_xy(dataset_name, set_type, catalog):
         data_df.sort_values(by=['mjd'], inplace=True)
         data_df.reset_index(drop=True, inplace=True)
 
-        if (set_type != 'evalu') and (np.shape(data_df)[0] >= window):
-            x_, y_spar_ = _processing(cat, data_df)
+        if (set_type != 'evalu') and (np.shape(data_df)[0] >= window[dataset_name]):
+            x_, y_spar_ = _processing(dataset_name, cat, data_df)
             [x.append(foo) for foo in x_]; [y_spar.append(bar) for bar in y_spar_]
         elif set_type == 'evalu':
             x.append(_proc_dtdm(_load_dtdm(data_df))); y_spar.append([cat])
@@ -97,11 +97,11 @@ def load_xy(dataset_name, set_type, catalog):
     return x, y_spar
 
 
-def _processing(cat, data_df):
+def _processing(dataset_name, cat, data_df):
     dtdm_org = _load_dtdm(data_df)
-    x_, y_spar_ = np.array([]).reshape([0, (window-w)//s + 1, 2 * w]), np.array([]).reshape([0, 1])
-    for i in range(0, np.shape(dtdm_org)[0] - (window - 1), stride):
-        dtdm_bin_ = _proc_dtdm(dtdm_org[i: i + window, :])
+    x_, y_spar_ = np.array([]).reshape([0, (window[dataset_name]-w)//s + 1, 2 * w]), np.array([]).reshape([0, 1])
+    for i in range(0, np.shape(dtdm_org)[0] - (window[dataset_name] - 1), stride[dataset_name]):
+        dtdm_bin_ = _proc_dtdm(dtdm_org[i: i + window[dataset_name], :])
         dtdm_bin_, cat_ = np.expand_dims(dtdm_bin_, axis=0), np.expand_dims([cat], axis=0)
         x_, y_spar_ = np.vstack([x_, dtdm_bin_]), np.vstack([y_spar_, cat_])
 
