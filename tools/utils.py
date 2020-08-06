@@ -14,8 +14,9 @@ from imblearn.over_sampling import RandomOverSampler
 from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
 
+thresh, sample = data_config['thresh'], data_config['sample']
 window, stride = data_config['window'], data_config['stride']
-(w, s), sample = data_config['ws'], data_config['sample']
+(w, s) = data_config['ws']
 kfold = evalu_config['kfold']
 
 
@@ -24,8 +25,12 @@ def load_catalog(dataset_name, set_type):
     whole_catalog, unbal_catalog = pd.DataFrame(), pd.DataFrame()
     valid_catalog, evalu_catalog = pd.DataFrame(), pd.DataFrame()
 
-    # TODO: WISE need to drop some categories
-    cats = sorted(set(catalog['Class']))
+    # TODO: OGLE remove std (non-variable) category 
+    cats_raw, cats = sorted(set(catalog['Class'])), []
+    for cat in cats_raw:
+        if len(catalog[catalog['Class'] == cat]) >= thresh[dataset_name]:
+            cats.append(cat)
+
     for cat in cats:
         catalog_ = catalog[catalog['Class'] == cat].reset_index(drop=True, inplace=False)
         catalog_ = sklearn.utils.shuffle(catalog_, random_state=0); size_ = np.shape(catalog_)[0]
@@ -35,7 +40,7 @@ def load_catalog(dataset_name, set_type):
         evalu_catalog = pd.concat([evalu_catalog, catalog_.iloc[int(size_ * 0.8):, :]])
 
     ros = RandomOverSampler(sampling_strategy='auto', random_state=1)
-    rus = RandomUnderSampler(sampling_strategy={cat: sample for cat in cats}, random_state=1)
+    rus = RandomUnderSampler(sampling_strategy={cat: sample[dataset_name] for cat in cats}, random_state=1)
     unbal_catalog, _ = ros.fit_resample(unbal_catalog, unbal_catalog['Class'])
     train_catalog, _ = rus.fit_resample(unbal_catalog, unbal_catalog['Class'])
 
@@ -76,6 +81,10 @@ def load_xy(dataset_name, set_type, catalog):
     x, y_spar, drop_count = [], [], 0
     for cat, path in tqdm(list(zip(cats, paths))):
         data_df = pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, path))
+        data_df.drop_duplicates(subset=['mjd'], keep='first', inplace=True)
+        data_df.sort_values(by=['mjd'], inplace=True)
+        data_df.reset_index(drop=True, inplace=True)
+
         if (set_type != 'evalu') and (np.shape(data_df)[0] >= window):
             x_, y_spar_ = _processing(cat, data_df)
             [x.append(foo) for foo in x_]; [y_spar.append(bar) for bar in y_spar_]
@@ -104,9 +113,6 @@ def _processing(cat, data_df):
 
 
 def _load_dtdm(data_df):
-    data_df.sort_values(by=['mjd'], inplace=True)
-    data_df.reset_index(drop=True, inplace=True)
-
     scaler = MinMaxScaler(feature_range=(0, 30))
     scaler.fit(data_df['mag'].values.reshape(-1, 1))
     mjd = data_df['mjd'].values.reshape(-1, 1)
