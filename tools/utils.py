@@ -24,12 +24,8 @@ def load_catalog(dataset_name, set_type):
     catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
     whole_catalog, unbal_catalog = pd.DataFrame(), pd.DataFrame()
     valid_catalog, evalu_catalog = pd.DataFrame(), pd.DataFrame()
-
-    # TODO: OGLE remove std (non-variable) category 
-    cats_raw, cats = sorted(set(catalog['Class'])), []
-    for cat in cats_raw:
-        if len(catalog[catalog['Class'] == cat]) >= thresh[dataset_name]:
-            cats.append(cat)
+    encoder = load_one_hot(dataset_name)
+    cats = list(encoder.categories_[0])
 
     for cat in cats:
         catalog_ = catalog[catalog['Class'] == cat].reset_index(drop=True, inplace=False)
@@ -132,7 +128,14 @@ def _proc_dtdm(dtdm_org):
 
 
 def dump_one_hot(dataset_name):
-    catalog = load_catalog(dataset_name, 'whole')
+    # TODO: OGLE remove std (non-variable) category
+    catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
+    cats = []
+    for cat in sorted(set(catalog['Class'])):
+        if len(catalog[catalog['Class'] == cat]) >= thresh[dataset_name]:
+            cats.append(cat)
+    catalog = catalog[catalog['Class'].isin(cats)].reset_index(drop=True, inplace=False)
+
     y_spar = np.array(sorted(list(catalog['Class']))).reshape(-1, 1)
     encoder = OneHotEncoder(handle_unknown='ignore')
     encoder.fit(y_spar)
@@ -141,18 +144,18 @@ def dump_one_hot(dataset_name):
         pickle.dump(encoder, handle)
 
 
-def dump_scaler(dataset_name, feature_range=(0, 30)):
-    catalog = load_catalog(dataset_name, 'whole')
-    cats, paths = list(catalog['Class']), list(catalog['Path'])
-    mag_full = np.array([])
-    for cat, path in tqdm(list(zip(cats, paths))):
-        data_df = pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, path))
-        mag_full = np.append(mag_full, np.array(data_df['mag']))
-    scaler = MinMaxScaler(feature_range=feature_range)
-    scaler.fit(mag_full.reshape(-1, 1))
-
-    with open(os.path.join(DATA_FOLDER, dataset_name, 'scaler.pkl'), 'wb') as handle:
-        pickle.dump(scaler, handle)
+# def dump_scaler(dataset_name, feature_range=(0, 30)):
+#     catalog = load_catalog(dataset_name, 'whole')
+#     cats, paths = list(catalog['Class']), list(catalog['Path'])
+#     mag_full = np.array([])
+#     for cat, path in tqdm(list(zip(cats, paths))):
+#         data_df = pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, path))
+#         mag_full = np.append(mag_full, np.array(data_df['mag']))
+#     scaler = MinMaxScaler(feature_range=feature_range)
+#     scaler.fit(mag_full.reshape(-1, 1))
+#
+#     with open(os.path.join(DATA_FOLDER, dataset_name, 'scaler.pkl'), 'wb') as handle:
+#         pickle.dump(scaler, handle)
 
 
 def new_dir(log_dir):

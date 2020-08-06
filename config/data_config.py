@@ -6,7 +6,6 @@ thresh = {
   "OGLE": 500,
 }
 
-
 sample = {
   "ASAS": 300,
   "MACHO": 300,
