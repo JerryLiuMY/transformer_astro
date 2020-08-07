@@ -4,12 +4,14 @@ import numpy as np
 import sklearn
 import pandas as pd
 import pickle
-from global_settings import DATA_FOLDER
+from global_settings import DATA_FOLDER, DATASET_TYPE
 from sklearn.utils import class_weight
 from config.exec_config import train_config
 from tensorflow.keras.utils import Sequence
 from datetime import datetime
-from tools.utils import load_fold, load_catalog, load_one_hot, load_xy
+from tools.utils import load_catalog, load_fold
+from tools.utils import load_one_hot, load_xy
+from tools.utils import timer
 
 
 batch = train_config['batch']
@@ -56,10 +58,12 @@ class FoldGenerator(BaseGenerator):
         self.catalog = load_fold(self.dataset_name, 'train', self.fold)
 
 
+@timer
 def data_loader(dataset_name, set_type):
     assert set_type in ['train', 'valid', 'evalu'], 'Invalid set type'
-    with open(os.path.join(DATA_FOLDER, dataset_name, set_type + '.pkl'), 'wb') as handle:
-        (x, y) = pickle.load(handle)
+    dataset_folder = '_'.join([dataset_name, DATASET_TYPE]) if DATASET_TYPE is not None else dataset_name
+    with open(os.path.join(DATA_FOLDER, dataset_folder, set_type + '.pkl'), 'rb') as handle:
+        x, y = pickle.load(handle)
 
     return x, y
 
@@ -75,7 +79,7 @@ def fold_loader(dataset_name, set_type, fold):
     return x, y
 
 
-def _data_saver(dataset_name, set_type):
+def data_saver(dataset_name, set_type):
     assert set_type in ['train', 'valid', 'evalu'], 'Invalid set type'
     catalog = load_catalog(dataset_name, set_type)
     encoder = load_one_hot(dataset_name)
@@ -83,8 +87,9 @@ def _data_saver(dataset_name, set_type):
     x, y_spar = load_xy(dataset_name, set_type, catalog)
     y = encoder.transform(y_spar).toarray()
 
-    with open(os.path.join(DATA_FOLDER, dataset_name, set_type + '.pkl'), 'wb') as handle:
-        pickle.dump((x, y), handle)
+    dataset_folder = '_'.join([dataset_name, DATASET_TYPE]) if DATASET_TYPE is not None else dataset_name
+    with open(os.path.join(DATA_FOLDER, dataset_folder, set_type + '.pkl'), 'wb') as handle:
+        pickle.dump((x, y), handle, protocol=4)
 
 
 def _check_dataset_name(dataset_name):

@@ -1,12 +1,11 @@
 import os
 import itertools
-from global_settings import LOG_FOLDER
+from global_settings import LOG_FOLDER, DATASET_NAME
 from tools.utils import new_dir
 from model.base import log_params
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from model.lstm import SimpleLSTM, FoldLSTM
 from config.exec_config import evalu_config
-from config.exec_config import DATASET_NAME
 
 kfold = evalu_config['kfold']
 

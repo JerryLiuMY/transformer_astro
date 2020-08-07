@@ -2,6 +2,8 @@ import os
 import pickle
 import numpy as np
 import pandas as pd
+import functools
+import time
 import sklearn
 from sklearn.preprocessing import OneHotEncoder
 from tensorflow.python.keras.preprocessing.sequence import pad_sequences
@@ -144,6 +146,20 @@ def dump_one_hot(dataset_name):
         pickle.dump(encoder, handle)
 
 
+def dump_scaler(dataset_name, feature_range=(0, 30)):
+    catalog = load_catalog(dataset_name, 'whole')
+    cats, paths = list(catalog['Class']), list(catalog['Path'])
+    mag_full = np.array([])
+    for cat, path in tqdm(list(zip(cats, paths))):
+        data_df = pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, path))
+        mag_full = np.append(mag_full, np.array(data_df['mag']))
+    scaler = MinMaxScaler(feature_range=feature_range)
+    scaler.fit(mag_full.reshape(-1, 1))
+
+    with open(os.path.join(DATA_FOLDER, dataset_name, 'scaler.pkl'), 'wb') as handle:
+        pickle.dump(scaler, handle)
+
+
 def new_dir(log_dir):
     past_dirs = next(os.walk(log_dir))[1]
     new_num = 0 if len(past_dirs) == 0 else np.max([int(past_dir.split('_')[-1]) for past_dir in past_dirs]) + 1
@@ -153,15 +169,15 @@ def new_dir(log_dir):
     return exp_dir
 
 
-# def dump_scaler(dataset_name, feature_range=(0, 30)):
-#     catalog = load_catalog(dataset_name, 'whole')
-#     cats, paths = list(catalog['Class']), list(catalog['Path'])
-#     mag_full = np.array([])
-#     for cat, path in tqdm(list(zip(cats, paths))):
-#         data_df = pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, path))
-#         mag_full = np.append(mag_full, np.array(data_df['mag']))
-#     scaler = MinMaxScaler(feature_range=feature_range)
-#     scaler.fit(mag_full.reshape(-1, 1))
-#
-#     with open(os.path.join(DATA_FOLDER, dataset_name, 'scaler.pkl'), 'wb') as handle:
-#         pickle.dump(scaler, handle)
+def timer(func):
+    print('Loading pre-processed data ...')
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        beg_time = time.process_time()
+        value = func(*args, **kwargs)
+        end_time = time.process_time()
+        print(f'Successfully loaded pre-processed data in {round(end_time - beg_time, 2)}s')
+        return value
+
+    return wrapper
