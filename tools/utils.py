@@ -144,6 +144,15 @@ def dump_one_hot(dataset_name):
         pickle.dump(encoder, handle)
 
 
+def new_dir(log_dir):
+    past_dirs = next(os.walk(log_dir))[1]
+    new_num = 0 if len(past_dirs) == 0 else np.max([int(past_dir.split('_')[-1]) for past_dir in past_dirs]) + 1
+    exp_dir = os.path.join(log_dir, '_'.join(['experiment', str(new_num)]))
+    os.mkdir(exp_dir)
+
+    return exp_dir
+
+
 # def dump_scaler(dataset_name, feature_range=(0, 30)):
 #     catalog = load_catalog(dataset_name, 'whole')
 #     cats, paths = list(catalog['Class']), list(catalog['Path'])
@@ -156,12 +165,3 @@ def dump_one_hot(dataset_name):
 #
 #     with open(os.path.join(DATA_FOLDER, dataset_name, 'scaler.pkl'), 'wb') as handle:
 #         pickle.dump(scaler, handle)
-
-
-def new_dir(log_dir):
-    past_dirs = next(os.walk(log_dir))[1]
-    new_num = 0 if len(past_dirs) == 0 else np.max([int(past_dir.split('_')[-1]) for past_dir in past_dirs]) + 1
-    exp_dir = os.path.join(log_dir, '_'.join(['experiment', str(new_num)]))
-    os.mkdir(exp_dir)
-
-    return exp_dir

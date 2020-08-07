@@ -81,7 +81,7 @@ class Base:
         decay_step = 50
 
         learn_rate = begin_rate * np.power(decay_rate, np.divmod(step, decay_step)[0])
-        tf.summary.scalar('learning Rate', data=learn_rate, step=step)
+        tf.summary.scalar('Learning Rate', data=learn_rate, step=step)
 
         return learn_rate
 
@@ -153,8 +153,8 @@ class FoldBase(Base):
         self.x_valid, self.y_valid = self.x_evalu.copy(), self.y_evalu.copy()
 
 
-# investigate data len
-# remove very minority set
+# cluster / colab
+# TFrecord
 # test set result
 # attention model
 # Phased LSTM

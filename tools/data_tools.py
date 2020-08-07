@@ -1,7 +1,10 @@
+import os
 import math
 import numpy as np
 import sklearn
 import pandas as pd
+import pickle
+from global_settings import DATA_FOLDER
 from sklearn.utils import class_weight
 from config.exec_config import train_config
 from tensorflow.keras.utils import Sequence
@@ -55,11 +58,8 @@ class FoldGenerator(BaseGenerator):
 
 def data_loader(dataset_name, set_type):
     assert set_type in ['train', 'valid', 'evalu'], 'Invalid set type'
-    catalog = load_catalog(dataset_name, set_type)
-    encoder = load_one_hot(dataset_name)
-    print(f'{datetime.now()} Loading {dataset_name} {set_type} set')
-    x, y_spar = load_xy(dataset_name, set_type, catalog)
-    y = encoder.transform(y_spar).toarray()
+    with open(os.path.join(DATA_FOLDER, dataset_name, set_type + '.pkl'), 'wb') as handle:
+        (x, y) = pickle.load(handle)
 
     return x, y
 
@@ -73,6 +73,18 @@ def fold_loader(dataset_name, set_type, fold):
     y = encoder.transform(y_spar).toarray()
 
     return x, y
+
+
+def _data_saver(dataset_name, set_type):
+    assert set_type in ['train', 'valid', 'evalu'], 'Invalid set type'
+    catalog = load_catalog(dataset_name, set_type)
+    encoder = load_one_hot(dataset_name)
+    print(f'{datetime.now()} Loading {dataset_name} {set_type} set')
+    x, y_spar = load_xy(dataset_name, set_type, catalog)
+    y = encoder.transform(y_spar).toarray()
+
+    with open(os.path.join(DATA_FOLDER, dataset_name, set_type + '.pkl'), 'wb') as handle:
+        pickle.dump((x, y), handle)
 
 
 def _check_dataset_name(dataset_name):
