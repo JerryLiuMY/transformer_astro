@@ -1,7 +1,5 @@
-FLAG, DATASET_NAME, DATASET_TYPE = 'local', 'GAIA', 'sim'
+FLAG = 'local'
 assert FLAG in ['local', 'floyd'], 'Invalid flag'
-assert DATASET_NAME in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'OGLE'], 'Invalid dataset name'
-assert DATASET_TYPE in [None, 'sim', 'pha', 'att'], 'Invalid dataset type'
 
 if FLAG == 'local':
     LOG_FOLDER = '/Users/mingyu/Desktop/log'

@@ -4,22 +4,19 @@ import numpy as np
 import sklearn
 import pandas as pd
 import pickle
-from global_settings import DATA_FOLDER, DATASET_TYPE
+from global_settings import DATA_FOLDER
 from sklearn.utils import class_weight
 from config.exec_config import train_config
 from tensorflow.keras.utils import Sequence
 from datetime import datetime
 from tools.utils import load_catalog, load_fold
 from tools.utils import load_one_hot, load_xy
-from tools.utils import timer
-
-
+from tools.misc import timer, check_model_name, check_set_type
 batch = train_config['batch']
 
 
 class BaseGenerator(Sequence):
     def __init__(self, dataset_name):
-        _check_dataset_name(dataset_name)
         self.dataset_name = dataset_name
         self.catalog = pd.DataFrame()
         self.encoder = load_one_hot(self.dataset_name)
@@ -59,41 +56,39 @@ class FoldGenerator(BaseGenerator):
 
 
 @timer
-def data_loader(dataset_name, set_type):
-    assert set_type in ['train', 'valid', 'evalu'], 'Invalid set type'
-    dataset_folder = '_'.join([dataset_name, DATASET_TYPE]) if DATASET_TYPE is not None else dataset_name
+def data_loader(dataset_name, model_name, set_type):
+    check_model_name(model_name); check_set_type(set_type)
+    dataset_folder = '_'.join([dataset_name, model_name])
     with open(os.path.join(DATA_FOLDER, dataset_folder, set_type + '.pkl'), 'rb') as handle:
         x, y = pickle.load(handle)
 
     return x, y
 
 
-def fold_loader(dataset_name, set_type, fold):
-    assert set_type in ['train', 'evalu'], 'Invalid set type'
-    catalog = load_fold(dataset_name, set_type, fold)
-    encoder = load_one_hot(dataset_name)
-    print(f'{datetime.now()} Loading {dataset_name} {set_type} set fold {fold}')
-    x, y_spar = load_xy(dataset_name, set_type, catalog)
-    y = encoder.transform(y_spar).toarray()
+def data_saver(dataset_name, model_name, set_type):
+    check_model_name(model_name); check_set_type(set_type)
+    print(f'{datetime.now()} Loading {dataset_name} {set_type} set')
 
-    return x, y
-
-
-def data_saver(dataset_name, set_type):
-    assert set_type in ['train', 'valid', 'evalu'], 'Invalid set type'
     catalog = load_catalog(dataset_name, set_type)
     encoder = load_one_hot(dataset_name)
-    print(f'{datetime.now()} Loading {dataset_name} {set_type} set')
     x, y_spar = load_xy(dataset_name, set_type, catalog)
     y = encoder.transform(y_spar).toarray()
 
-    dataset_folder = '_'.join([dataset_name, DATASET_TYPE]) if DATASET_TYPE is not None else dataset_name
+    dataset_folder = '_'.join([dataset_name, model_name])
     with open(os.path.join(DATA_FOLDER, dataset_folder, set_type + '.pkl'), 'wb') as handle:
         pickle.dump((x, y), handle, protocol=4)
 
 
-def _check_dataset_name(dataset_name):
-    assert dataset_name.split('_')[0] in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'OGLE', 'Synthesis'], 'Invalid dataset name'
+def fold_loader(dataset_name, model_name, set_type, fold):
+    check_model_name(model_name); check_set_type(set_type, is_fold=True)
+    print(f'{datetime.now()} Loading {dataset_name} {set_type} set fold {fold}')
+
+    catalog = load_fold(dataset_name, set_type, fold)
+    encoder = load_one_hot(dataset_name)
+    x, y_spar = load_xy(dataset_name, set_type, catalog)
+    y = encoder.transform(y_spar).toarray()
+
+    return x, y
 
 
 if __name__ == '__main__':

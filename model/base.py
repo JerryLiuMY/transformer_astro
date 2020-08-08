@@ -8,10 +8,11 @@ from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorflow.keras.backend import clear_session
 from tensorboard.plugins.hparams import api as hp
 from datetime import datetime
-from tools.data_tools import data_loader, fold_loader
-from tools.data_tools import DataGenerator, FoldGenerator
 from tools.utils import load_one_hot
 from tools.exec_tools import plot_confusion, plot_to_image
+from tools.misc import check_dataset_name
+from tools.data_tools import data_loader, DataGenerator
+from tools.data_tools import fold_loader, FoldGenerator
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config
 
@@ -33,14 +34,13 @@ class Base:
 
     def __init__(self, dataset_name, hyper_param, exp_dir):
         clear_session()
+        check_dataset_name(dataset_name)
         self.dataset_name = dataset_name
         self.hyper_param = hyper_param
         self.exp_dir = exp_dir
         self._load_name()
         self._load_misc()
         self._load_path()
-        self._load_data()
-        self.model = None
 
     def _load_name(self):
         rnn_num = self.hyper_param[rnn_nums_hp]
@@ -69,10 +69,17 @@ class Base:
         self.img_path = os.path.join(self.img_dir, self.exp_name)
         self.hyp_path = os.path.join(self.hyp_dir, self.exp_name)
 
-    def _load_data(self):
-        self.train = data_loader(self.dataset_name, 'train') if not use_gen else DataGenerator(self.dataset_name)
-        self.x_valid, self.y_valid = data_loader(self.dataset_name, 'valid')
-        self.x_evalu, self.y_evalu = data_loader(self.dataset_name, 'evalu')
+    def _load_data(self, model_name):
+        if not use_gen:
+            self.train = data_loader(self.dataset_name, model_name, 'train')
+        else:
+            DataGenerator(self.dataset_name)
+        self.x_valid, self.y_valid = data_loader(self.dataset_name, model_name, 'valid')
+        self.x_evalu, self.y_evalu = data_loader(self.dataset_name, model_name, 'evalu')
+
+    def _build(self):
+        model = None
+        self.model = model
 
     @staticmethod
     def _lnr_schedule(step):
@@ -104,10 +111,6 @@ class Base:
             hp.hparams(self.hyper_param)
             for m, p in list(zip(metric_names, performances)):
                 tf.summary.scalar(m, p, step=0)
-
-    def build(self):
-        model = None
-        self.model = model
 
     def run(self):
         self.model.compile(
@@ -144,17 +147,17 @@ class FoldBase(Base):
         self.fold = fold
         super().__init__(dataset_name, hyper_param, exp_dir)
 
-    def _load_data(self):
+    def _load_data(self, model_name):
         if not use_gen:
-            self.train = fold_loader(self.dataset_name, 'train', self.fold)
+            self.train = fold_loader(self.dataset_name, model_name, 'train', self.fold)
         else:
             self.train = FoldGenerator(self.dataset_name, self.fold)
-        self.x_evalu, self.y_evalu = fold_loader(self.dataset_name, 'evalu', self.fold)
+        self.x_evalu, self.y_evalu = fold_loader(self.dataset_name, model_name, 'evalu', self.fold)
         self.x_valid, self.y_valid = self.x_evalu.copy(), self.y_evalu.copy()
 
 
+
 # cluster / colab
-# TFrecord
 # test set result
 # attention model
 # Phased LSTM

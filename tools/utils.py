@@ -3,7 +3,6 @@ import pickle
 import numpy as np
 import pandas as pd
 import functools
-import time
 import sklearn
 from sklearn.preprocessing import OneHotEncoder
 from tensorflow.python.keras.preprocessing.sequence import pad_sequences
@@ -15,6 +14,7 @@ from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
+import multiprocessing
 
 thresh, sample = data_config['thresh'], data_config['sample']
 window, stride = data_config['window'], data_config['stride']
@@ -74,29 +74,40 @@ def load_one_hot(dataset_name):
 
 
 def load_xy(dataset_name, set_type, catalog):
-    cats, paths = list(catalog['Class']), list(catalog['Path'])
+    num_process = 8
+    pool, catalogs = multiprocessing.Pool(num_process), np.array_split(catalog, num_process)
 
     x, y_spar, drop_count = [], [], 0
-    for cat, path in tqdm(list(zip(cats, paths))):
-        data_df = pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, path))
-        data_df.drop_duplicates(subset=['mjd'], keep='first', inplace=True)
-        data_df.sort_values(by=['mjd'], inplace=True)
-        data_df.reset_index(drop=True, inplace=True)
-
-        if (set_type != 'evalu') and (np.shape(data_df)[0] >= window[dataset_name]):
-            x_, y_spar_ = _processing(dataset_name, cat, data_df)
-            [x.append(foo) for foo in x_]; [y_spar.append(bar) for bar in y_spar_]
-        elif set_type == 'evalu':
-            x.append(_proc_dtdm(_load_dtdm(data_df))); y_spar.append([cat])
-        else:
-            drop_count += 1
+    for result in tqdm(pool.imap(functools.partial(load_xy_nest, dataset_name, set_type), catalogs)):
+        x_, y_spar_, drop_count_ = result
+        [x.append(foo) for foo in x_]; [y_spar.append(bar) for bar in y_spar_]; drop_count += drop_count_
+    pool.close(); pool.join()
 
     print(f'Number of dropped samples: {drop_count}')
-
     x = pad_sequences(x, value=np.pi, dtype=np.float32, padding='post')
     x, y_spar = np.array(x), np.array(y_spar)
 
     return x, y_spar
+
+
+def load_xy_nest(dataset_name, set_type, catalog_):
+    cats_, paths_ = list(catalog_['Class']), list(catalog_['Path'])
+    x_, y_spar_, drop_count_ = [], [], 0
+    for cat_, path_ in tqdm(list(zip(cats_, paths_))):
+        data_df_ = pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, path_))
+        data_df_.drop_duplicates(subset=['mjd'], keep='first', inplace=True)
+        data_df_.sort_values(by=['mjd'], inplace=True)
+        data_df_.reset_index(drop=True, inplace=True)
+
+        if (set_type != 'evalu') and (np.shape(data_df_)[0] >= window[dataset_name]):
+            x__, y_spar__ = _processing(dataset_name, cat_, data_df_)
+            [x_.append(foo) for foo in x__]; [y_spar_.append(bar) for bar in y_spar__]
+        elif set_type == 'evalu':
+            x_.append(_proc_dtdm(_load_dtdm(data_df_))); y_spar_.append([cat_])
+        else:
+            drop_count_ += 1
+
+    return x_, y_spar_, drop_count_
 
 
 def _processing(dataset_name, cat, data_df):
@@ -159,25 +170,3 @@ def dump_scaler(dataset_name, feature_range=(0, 30)):
     with open(os.path.join(DATA_FOLDER, dataset_name, 'scaler.pkl'), 'wb') as handle:
         pickle.dump(scaler, handle)
 
-
-def new_dir(log_dir):
-    past_dirs = next(os.walk(log_dir))[1]
-    new_num = 0 if len(past_dirs) == 0 else np.max([int(past_dir.split('_')[-1]) for past_dir in past_dirs]) + 1
-    exp_dir = os.path.join(log_dir, '_'.join(['experiment', str(new_num)]))
-    os.mkdir(exp_dir)
-
-    return exp_dir
-
-
-def timer(func):
-    print('Loading pre-processed data ...')
-
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        beg_time = time.process_time()
-        value = func(*args, **kwargs)
-        end_time = time.process_time()
-        print(f'Successfully loaded pre-processed data in {round(end_time - beg_time, 2)}s')
-        return value
-
-    return wrapper
