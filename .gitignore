@@ -2,13 +2,14 @@
 venv/
 .DS_Store
 .ipynb_checkpoints
+*.ipynb
 *.pyc
 *.xml
 *.iml
 *.pkl
 
-
 .floydexpt
 .floydignore
 floyd.yml
-*.ipynb
+ngrok
+ngrok-stable-linux-amd64.zip
