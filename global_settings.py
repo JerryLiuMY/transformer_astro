@@ -1,5 +1,5 @@
-FLAG = 'local'
-assert FLAG in ['local', 'floyd', 'colab'], 'Invalid flag'
+FLAG = 'floyd'
+assert FLAG in ['local', 'colab', 'floyd'], 'Invalid flag'
 
 if FLAG == 'local':
     LOG_FOLDER = '/Users/mingyu/Desktop/log'

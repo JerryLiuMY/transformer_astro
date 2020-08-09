@@ -1,10 +1,11 @@
 import numpy as np
 import tensorflow as tf
-from model.base import Base, FoldBase
+from model._base import _Base, _FoldBase
 from tensorflow.keras.layers import LSTM, Dense, ReLU
 from tensorflow.keras.layers import LayerNormalization, GlobalAveragePooling1D, TimeDistributed
 from tensorflow.keras.models import Sequential
 from tensorflow.keras import regularizers
+from layer.phased import PhasedLSTM
 from config.data_config import data_config
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config
@@ -13,7 +14,7 @@ use_gen = train_config['use_gen']
 (w, s) = data_config['ws']
 
 
-class SimpleLSTM(Base):
+class SimpleLSTM(_Base):
 
     def __init__(self, dataset_name, model_name, hyper_param, exp_dir):
         super().__init__(dataset_name, model_name, hyper_param, exp_dir)
@@ -25,9 +26,9 @@ class SimpleLSTM(Base):
         for _ in range(self.hyper_param[rnn_nums_hp]):
             # rnn_num = self.hyper_param[rnn_nums_hp]
             # foo = True if _ < rnn_num - 1 else False
-            foo = True
-            model.add(LSTM(
-                units=self.hyper_param[rnn_dims_hp], return_sequences=foo,
+            LSTMLayer = LSTM if self.model_name == 'sim' else PhasedLSTM
+            model.add(LSTMLayer(
+                units=self.hyper_param[rnn_dims_hp], return_sequences=True,
                 recurrent_regularizer=regularizers.l2(0.1))
             )
             model.add(LayerNormalization())
@@ -46,7 +47,7 @@ class SimpleLSTM(Base):
         self.model = model
 
 
-class FoldSimpleLSTM(SimpleLSTM, FoldBase):
+class FoldSimpleLSTM(SimpleLSTM, _FoldBase):
 
     def __init__(self, dataset_name, model_name, hyper_param, exp_dir, fold):
-        FoldBase.__init__(self, dataset_name, model_name, hyper_param, exp_dir, fold)
+        _FoldBase.__init__(self, dataset_name, model_name, hyper_param, exp_dir, fold)

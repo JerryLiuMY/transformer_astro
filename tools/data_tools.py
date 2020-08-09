@@ -11,7 +11,7 @@ from tensorflow.keras.utils import Sequence
 from datetime import datetime
 from tools.utils import load_catalog, load_fold
 from tools.utils import load_xy
-from tools.misc import timer, check_model_name, check_set_type
+from tools.misc import one_hot_msg, data_msg, check_model_name, check_set_type
 batch = train_config['batch']
 
 
@@ -56,7 +56,16 @@ class FoldGenerator(BaseGenerator):
         self.catalog = load_fold(self.dataset_name, 'train', self.fold)
 
 
-@timer
+@one_hot_msg
+def one_hot_loader(dataset_name, model_name):
+    dataset_folder = '_'.join([dataset_name, model_name])
+    with open(os.path.join(DATA_FOLDER, dataset_folder, 'encoder.pkl'), 'rb') as handle:
+        encoder = pickle.load(handle)
+
+    return encoder
+
+
+@data_msg
 def data_loader(dataset_name, model_name, set_type):
     check_model_name(model_name); check_set_type(set_type)
     dataset_folder = '_'.join([dataset_name, model_name])
@@ -78,12 +87,12 @@ def fold_loader(dataset_name, model_name, set_type, fold):
     return x, y
 
 
-def one_hot_loader(dataset_name, model_name):
+def one_hot_saver(dataset_name, model_name):
+    check_model_name(model_name)
+    encoder = pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'))
     dataset_folder = '_'.join([dataset_name, model_name])
-    with open(os.path.join(DATA_FOLDER, dataset_folder, 'encoder.pkl'), 'rb') as handle:
-        encoder = pickle.load(handle)
-
-    return encoder
+    with open(os.path.join(DATA_FOLDER, dataset_folder, 'encoder.pkl'), 'wb') as handle:
+        pickle.dump(encoder, handle)
 
 
 def data_saver(dataset_name, model_name, set_type):
@@ -98,5 +107,4 @@ def data_saver(dataset_name, model_name, set_type):
     dataset_folder = '_'.join([dataset_name, model_name])
     with open(os.path.join(DATA_FOLDER, dataset_folder, set_type + '.pkl'), 'wb') as handle:
         pickle.dump((x, y), handle, protocol=4)
-
 

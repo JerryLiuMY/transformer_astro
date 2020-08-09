@@ -29,7 +29,7 @@ def log_params(exp_dir):
         )
 
 
-class Base:
+class _Base:
 
     def __init__(self, dataset_name, model_name, hyper_param, exp_dir):
         clear_session()
@@ -143,7 +143,7 @@ class Base:
             )
 
 
-class FoldBase(Base):
+class _FoldBase(_Base):
 
     def __init__(self, dataset_name, model_name, hyper_param, exp_dir, fold):
         self.fold = fold

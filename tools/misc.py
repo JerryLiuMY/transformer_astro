@@ -5,7 +5,16 @@ import numpy as np
 from global_settings import LOG_FOLDER
 
 
-def timer(func):
+def one_hot_msg(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        value = func(*args, **kwargs)
+        print(f'Successfully loaded one-hot encoder')
+        return value
+    return wrapper
+
+
+def data_msg(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
