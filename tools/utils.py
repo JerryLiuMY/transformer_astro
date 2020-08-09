@@ -1,10 +1,10 @@
 import os
 import pickle
+
 import numpy as np
 import pandas as pd
 import functools
 import sklearn
-from sklearn.preprocessing import OneHotEncoder
 from tensorflow.python.keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import StratifiedKFold
 from global_settings import DATA_FOLDER
@@ -12,7 +12,7 @@ from config.data_config import data_config
 from config.exec_config import evalu_config
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from tqdm import tqdm
 import multiprocessing
 
@@ -26,7 +26,7 @@ def load_catalog(dataset_name, set_type):
     catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
     whole_catalog, unbal_catalog = pd.DataFrame(), pd.DataFrame()
     valid_catalog, evalu_catalog = pd.DataFrame(), pd.DataFrame()
-    encoder = load_one_hot(dataset_name)
+    encoder = pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'))
     cats = list(encoder.categories_[0])
 
     for cat in cats:
@@ -64,13 +64,6 @@ def load_fold(dataset_name, set_type, fold):
         fold_idx += 1
 
     return fold_dict[fold][set_type]
-
-
-def load_one_hot(dataset_name):
-    with open(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'), 'rb') as handle:
-        encoder = pickle.load(handle)
-
-    return encoder
 
 
 def load_xy(dataset_name, set_type, catalog):
@@ -140,8 +133,7 @@ def _proc_dtdm(dtdm_org):
     return dtdm_bin
 
 
-def dump_one_hot(dataset_name):
-    # TODO: OGLE remove std (non-variable) category
+def save_one_hot(dataset_name):
     catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
     cats = []
     for cat in sorted(set(catalog['Class'])):
@@ -155,18 +147,3 @@ def dump_one_hot(dataset_name):
 
     with open(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'), 'wb') as handle:
         pickle.dump(encoder, handle)
-
-
-def dump_scaler(dataset_name, feature_range=(0, 30)):
-    catalog = load_catalog(dataset_name, 'whole')
-    cats, paths = list(catalog['Class']), list(catalog['Path'])
-    mag_full = np.array([])
-    for cat, path in tqdm(list(zip(cats, paths))):
-        data_df = pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, path))
-        mag_full = np.append(mag_full, np.array(data_df['mag']))
-    scaler = MinMaxScaler(feature_range=feature_range)
-    scaler.fit(mag_full.reshape(-1, 1))
-
-    with open(os.path.join(DATA_FOLDER, dataset_name, 'scaler.pkl'), 'wb') as handle:
-        pickle.dump(scaler, handle)
-

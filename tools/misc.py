@@ -2,19 +2,10 @@ import functools
 import os
 import time
 import numpy as np
-
-
-def new_dir(log_dir):
-    past_dirs = next(os.walk(log_dir))[1]
-    new_num = 0 if len(past_dirs) == 0 else np.max([int(past_dir.split('_')[-1]) for past_dir in past_dirs]) + 1
-    exp_dir = os.path.join(log_dir, '_'.join(['experiment', str(new_num)]))
-    os.mkdir(exp_dir)
-
-    return exp_dir
+from global_settings import LOG_FOLDER
 
 
 def timer(func):
-    print('Loading pre-processed data ...')
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -25,6 +16,22 @@ def timer(func):
         return value
 
     return wrapper
+
+
+def get_exp_dir(log_dir):
+    past_dirs = next(os.walk(log_dir))[1]
+    new_num = 0 if len(past_dirs) == 0 else np.max([int(past_dir.split('_')[-1]) for past_dir in past_dirs]) + 1
+    exp_dir = os.path.join(log_dir, '_'.join(['experiment', str(new_num)]))
+    os.mkdir(exp_dir)
+
+    return exp_dir
+
+
+def get_log_dir(dataset_name, model_name):
+    log_dir = os.path.join(LOG_FOLDER, f'{dataset_name}_{model_name}')
+    os.makedirs(log_dir, exist_ok=True)
+
+    return log_dir
 
 
 def check_dataset_name(dataset_name):

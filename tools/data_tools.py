@@ -10,16 +10,17 @@ from config.exec_config import train_config
 from tensorflow.keras.utils import Sequence
 from datetime import datetime
 from tools.utils import load_catalog, load_fold
-from tools.utils import load_one_hot, load_xy
+from tools.utils import load_xy
 from tools.misc import timer, check_model_name, check_set_type
 batch = train_config['batch']
 
 
 class BaseGenerator(Sequence):
-    def __init__(self, dataset_name):
+    def __init__(self, dataset_name, model_name):
         self.dataset_name = dataset_name
+        self.model_name = model_name
         self.catalog = pd.DataFrame()
-        self.encoder = load_one_hot(self.dataset_name)
+        self.encoder = one_hot_loader(self.dataset_name, self.model_name)
         self.on_epoch_end()
 
     def __len__(self):
@@ -43,14 +44,14 @@ class BaseGenerator(Sequence):
 
 
 class DataGenerator(BaseGenerator):
-    def __init__(self, dataset_name):
-        super().__init__(dataset_name)
+    def __init__(self, dataset_name, model_name):
+        super().__init__(dataset_name, model_name)
         self.catalog = load_catalog(self.dataset_name, 'train')
 
 
 class FoldGenerator(BaseGenerator):
-    def __init__(self, dataset_name, fold):
-        super().__init__(dataset_name)
+    def __init__(self, dataset_name, model_name, fold):
+        super().__init__(dataset_name, model_name)
         self.fold = fold
         self.catalog = load_fold(self.dataset_name, 'train', self.fold)
 
@@ -65,12 +66,32 @@ def data_loader(dataset_name, model_name, set_type):
     return x, y
 
 
+def fold_loader(dataset_name, model_name, set_type, fold):
+    check_model_name(model_name); check_set_type(set_type, is_fold=True)
+    print(f'{datetime.now()} Loading {dataset_name} {set_type} set fold {fold}')
+
+    catalog = load_fold(dataset_name, set_type, fold)
+    encoder = one_hot_loader(dataset_name, model_name)
+    x, y_spar = load_xy(dataset_name, set_type, catalog)
+    y = encoder.transform(y_spar).toarray()
+
+    return x, y
+
+
+def one_hot_loader(dataset_name, model_name):
+    dataset_folder = '_'.join([dataset_name, model_name])
+    with open(os.path.join(DATA_FOLDER, dataset_folder, 'encoder.pkl'), 'rb') as handle:
+        encoder = pickle.load(handle)
+
+    return encoder
+
+
 def data_saver(dataset_name, model_name, set_type):
     check_model_name(model_name); check_set_type(set_type)
     print(f'{datetime.now()} Loading {dataset_name} {set_type} set')
 
     catalog = load_catalog(dataset_name, set_type)
-    encoder = load_one_hot(dataset_name)
+    encoder = one_hot_loader(dataset_name, model_name)
     x, y_spar = load_xy(dataset_name, set_type, catalog)
     y = encoder.transform(y_spar).toarray()
 
@@ -79,17 +100,3 @@ def data_saver(dataset_name, model_name, set_type):
         pickle.dump((x, y), handle, protocol=4)
 
 
-def fold_loader(dataset_name, model_name, set_type, fold):
-    check_model_name(model_name); check_set_type(set_type, is_fold=True)
-    print(f'{datetime.now()} Loading {dataset_name} {set_type} set fold {fold}')
-
-    catalog = load_fold(dataset_name, set_type, fold)
-    encoder = load_one_hot(dataset_name)
-    x, y_spar = load_xy(dataset_name, set_type, catalog)
-    y = encoder.transform(y_spar).toarray()
-
-    return x, y
-
-
-if __name__ == '__main__':
-    pass
