@@ -13,7 +13,7 @@ from tools.misc import check_dataset_name
 from tools.data_tools import data_loader, DataGenerator, one_hot_loader
 from tools.data_tools import fold_loader, FoldGenerator
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
-from config.exec_config import train_config
+from config.exec_config import train_config, strategy
 
 
 use_gen, epoch = train_config['use_gen'], train_config['epoch']
@@ -42,7 +42,9 @@ class _Base:
         self._load_path()
         self._load_enco()
         self._load_data()
-        self._build()
+        with strategy.scope():
+            self._build()
+            self._compile()
 
     def _load_name(self):
         rnn_num = self.hyper_param[rnn_nums_hp]
@@ -83,6 +85,13 @@ class _Base:
         model = None
         self.model = model
 
+    def _compile(self):
+        self.model.compile(
+            experimental_steps_per_execution=5,
+            loss='categorical_crossentropy',
+            optimizer='adam',
+            metrics=metrics)
+
     @staticmethod
     def _lnr_schedule(step):
         begin_rate = 0.001
@@ -115,11 +124,6 @@ class _Base:
                 tf.summary.scalar(m, p, step=0)
 
     def run(self):
-        self.model.compile(
-            loss='categorical_crossentropy',
-            optimizer='adam',
-            metrics=metrics)
-
         # ear_callback = EarlyStopping(monitor='val_loss', min_delta=0, patience=10, mode='min')
         lnr_callback = LearningRateScheduler(schedule=self._lnr_schedule, verbose=1)
         his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
