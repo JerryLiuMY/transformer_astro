@@ -1,11 +1,12 @@
 from tensorflow.keras.metrics import CategoricalAccuracy, Precision, Recall
+from global_settings import FLAG
 import tensorflow as tf
 import subprocess
 import os
 
-cpu_devices = tf.config.experimental.list_physical_devices('CPU')
-gpu_devices = tf.config.experimental.list_physical_devices('GPU')
-tpu_devices = tf.config.experimental.list_logical_devices('TPU')
+tpu_devices = tf.config.list_logical_devices('TPU')
+gpu_devices = tf.config.list_physical_devices('GPU')
+cpu_devices = tf.config.list_physical_devices('CPU')
 
 if bool(len(tpu_devices)):
     print("Number of TPU devices: ", len(tpu_devices))
@@ -15,12 +16,18 @@ if bool(len(tpu_devices)):
     strategy = tf.distribute.TPUStrategy(resolver)
 elif bool(len(gpu_devices)):
     print("Number of GPU devices: ", len(gpu_devices))
-    subprocess.run('nvidia-smi')
+    subprocess.run("nvidia-smi")
     strategy = tf.distribute.MirroredStrategy()
 elif bool(len(cpu_devices)):
-    tf.distribute.get_strategy()
+    print("Number of CPU devices: ", len(gpu_devices))
+    if FLAG in ['colab', 'floyd']:
+        subprocess.run("cat /proc/cpuinfo  | grep 'name'| uniq")
+    else:
+        subprocess.run("sysctl -n machdep.cpu.brand_string")
+    strategy = tf.distribute.get_strategy()
 else:
-    raise EnvironmentError('No physical devices or remote devices')
+    raise EnvironmentError("No physical devices or remote devices")
+
 
 metrics = [
     CategoricalAccuracy(name='accuracy'),
@@ -32,6 +39,7 @@ metrics = [
     # FalsePositives(name='fp'),
     # FalseNegatives(name='fn'),
 ]
+
 
 train_config = {
     "use_gen": False,
