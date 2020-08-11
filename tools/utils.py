@@ -141,7 +141,7 @@ def save_one_hot(dataset_name):
     catalog = catalog[catalog['Class'].isin(cats)].reset_index(drop=True, inplace=False)
 
     y_spar = np.array(sorted(list(catalog['Class']))).reshape(-1, 1)
-    encoder = OneHotEncoder(handle_unknown='ignore')
+    encoder = OneHotEncoder(handle_unknown='ignore', dtype=np.float32)
     encoder.fit(y_spar)
 
     with open(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'), 'wb') as handle:

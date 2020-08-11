@@ -39,6 +39,7 @@ class BaseGenerator(Sequence):
         x, y_spar = load_xy(self.dataset_name, 'train', catalog_)
         y = self.encoder.transform(y_spar).toarray()
         sample_weight = class_weight.compute_sample_weight('balanced', y)
+        x, y = x.astype(np.float32), y.astype(np.float32)
 
         return x, y, sample_weight
 
@@ -82,7 +83,8 @@ def fold_loader(dataset_name, model_name, set_type, fold):
     catalog = load_fold(dataset_name, set_type, fold)
     encoder = one_hot_loader(dataset_name, model_name)
     x, y_spar = load_xy(dataset_name, set_type, catalog)
-    y = encoder.transform(y_spar).toarray()
+    y = encoder.transform(y_spar).toarray().astype(np.float32)
+    x, y = x.astype(np.float32), y.astype(np.float32)
 
     return x, y
 
@@ -102,7 +104,8 @@ def data_saver(dataset_name, model_name, set_type):
     catalog = load_catalog(dataset_name, set_type)
     encoder = one_hot_loader(dataset_name, model_name)
     x, y_spar = load_xy(dataset_name, set_type, catalog)
-    y = encoder.transform(y_spar).toarray()
+    y = encoder.transform(y_spar).toarray().astype(np.float32)
+    x, y = x.astype(np.float32), y.astype(np.float32)
 
     dataset_folder = '_'.join([dataset_name, model_name])
     with open(os.path.join(DATA_FOLDER, dataset_folder, set_type + '.pkl'), 'wb') as handle:
