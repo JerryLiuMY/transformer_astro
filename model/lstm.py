@@ -24,8 +24,7 @@ class SimpleLSTM(_Base):
         model.add(tf.keras.layers.Masking(mask_value=np.pi, dtype=np.float32, input_shape=(None, w * 2)))
 
         for _ in range(self.hyper_param[rnn_nums_hp]):
-            # rnn_num = self.hyper_param[rnn_nums_hp]
-            # foo = True if _ < rnn_num - 1 else False
+            # foo = True if _ < self.hyper_param[rnn_nums_hp] - 1 else False
             LSTMLayer = LSTM if self.model_name == 'sim' else PhasedLSTM
             model.add(LSTMLayer(
                 units=self.hyper_param[rnn_dims_hp], return_sequences=True,

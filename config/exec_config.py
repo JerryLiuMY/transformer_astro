@@ -29,24 +29,18 @@ except KeyError:
     else:
         raise EnvironmentError("No physical devices or remote devices")
 
-
-metrics = [
-    CategoricalAccuracy(name='accuracy'),
-    Precision(name='precision'),
-    Recall(name='recall'),
-    # AUC(name='auc'),
-    # TruePositives(name='tp'),
-    # TrueNegatives(name='tn'),
-    # FalsePositives(name='fp'),
-    # FalseNegatives(name='fn'),
-]
+# metrics = [
+#     CategoricalAccuracy(name='accuracy'),
+#     Precision(name='precision'),
+#     Recall(name='recall')
+# ]
 
 
 train_config = {
     "use_gen": False,
     "epoch": 100,
     "batch": 128,
-    "metrics": metrics,
+    "metrics": ['Accuracy', 'Precision', 'Recall'],
 }
 
 evalu_config = {
