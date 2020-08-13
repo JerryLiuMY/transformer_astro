@@ -15,10 +15,9 @@ from tools.data_tools import fold_loader, FoldGenerator
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config, strategy
 
-
 use_gen, epoch = train_config['use_gen'], train_config['epoch']
 metrics, batch = train_config['metrics'], train_config['batch']
-metric_names = ['epoch_loss'] + ['_'.join(['epoch', _.name]) for _ in metrics]
+metric_names = ['epoch_loss'] + ['_'.join(['epoch', _.lower()]) for _ in metrics]
 
 
 def log_params(exp_dir):
@@ -87,7 +86,7 @@ class _Base:
 
     def _compile(self):
         self.model.compile(
-            experimental_steps_per_execution=5,
+            experimental_steps_per_execution=100,
             loss='categorical_crossentropy',
             optimizer='adam',
             metrics=metrics)
@@ -124,7 +123,6 @@ class _Base:
                 tf.summary.scalar(m, p, step=0)
 
     def run(self):
-        # ear_callback = EarlyStopping(monitor='val_loss', min_delta=0, patience=10, mode='min')
         lnr_callback = LearningRateScheduler(schedule=self._lnr_schedule, verbose=1)
         his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
         img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
@@ -162,7 +160,6 @@ class _FoldBase(_Base):
         self.x_valid, self.y_valid = self.x_evalu.copy(), self.y_evalu.copy()
 
 
-# cluster / colab
 # test set result
 # attention model
 # Phased LSTM

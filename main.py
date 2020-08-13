@@ -13,6 +13,7 @@ kfold = evalu_config['kfold']
 
 
 def run(dataset_name, model_name):
+    print(f'Running experiments on {dataset_name} : {model_name}')
     log_dir = get_log_dir(dataset_name, model_name)
     exp_dir = get_exp_dir(log_dir); log_params(exp_dir)
     rnn_nums, rnn_dims, dnn_nums = rnn_nums_hp.domain.values, rnn_dims_hp.domain.values, dnn_nums_hp.domain.values
