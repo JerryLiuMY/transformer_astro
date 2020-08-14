@@ -24,10 +24,18 @@ window = {
 
 stride = {key: int(window[key]/2) for key in window}
 
+ws = {
+  "ASAS": (2, 1),
+  "MACHO": (2, 1),
+  "WISE": (2, 1),
+  "GAIA": (2, 1),
+  "OGLE": (2, 1),
+}
+
 data_config = {
   "sample": sample,
   "thresh": thresh,
   "window": window,
   "stride": stride,
-  "ws": (2, 1),
+  "ws": ws,
 }

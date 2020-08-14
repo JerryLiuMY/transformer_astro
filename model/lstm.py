@@ -1,7 +1,6 @@
 import numpy as np
-import tensorflow as tf
 from model._base import _Base, _FoldBase
-from tensorflow.keras.layers import LSTM, Dense, ReLU
+from tensorflow.keras.layers import LSTM, Dense, ReLU, Masking
 from tensorflow.keras.layers import LayerNormalization, GlobalAveragePooling1D, TimeDistributed
 from tensorflow.keras.models import Sequential
 from tensorflow.keras import regularizers
@@ -11,7 +10,7 @@ from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config
 
 use_gen = train_config['use_gen']
-(w, s) = data_config['ws']
+ws = data_config['ws']
 
 
 class SimpleLSTM(_Base):
@@ -21,7 +20,7 @@ class SimpleLSTM(_Base):
 
     def _build(self):
         model = Sequential()
-        model.add(tf.keras.layers.Masking(mask_value=np.pi, dtype=np.float32, input_shape=(None, w * 2)))
+        model.add(Masking(mask_value=np.pi, dtype=np.float32, input_shape=(None, ws[self.dataset_name][0] * 2)))
 
         for _ in range(self.hyper_param[rnn_nums_hp]):
             # foo = True if _ < self.hyper_param[rnn_nums_hp] - 1 else False

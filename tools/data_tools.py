@@ -8,6 +8,7 @@ from global_settings import DATA_FOLDER
 from sklearn.utils import class_weight
 from config.exec_config import train_config
 from tensorflow.keras.utils import Sequence
+from tensorflow.data import Dataset
 from datetime import datetime
 from tools.utils import load_catalog, load_fold
 from tools.utils import load_xy
@@ -72,6 +73,8 @@ def data_loader(dataset_name, model_name, set_type):
     dataset_folder = '_'.join([dataset_name, model_name])
     with open(os.path.join(DATA_FOLDER, dataset_folder, set_type + '.pkl'), 'rb') as handle:
         x, y = pickle.load(handle)
+
+    dataset = Dataset.from_tensor_slices((x, y))
 
     return x, y
 

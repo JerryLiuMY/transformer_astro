@@ -1,4 +1,5 @@
 import os
+import re
 import numpy as np
 import tensorflow as tf
 from sklearn.utils import class_weight
@@ -17,7 +18,10 @@ from config.exec_config import train_config, strategy
 
 use_gen, epoch = train_config['use_gen'], train_config['epoch']
 metrics, batch = train_config['metrics'], train_config['batch']
-metric_names = ['epoch_loss'] + ['_'.join(['epoch', _.lower()]) for _ in metrics]
+metric_names = ['epoch_loss']
+for metric in metrics:
+    lower = [_.lower() for _ in re.findall('[A-Z][^A-Z]*', metric)]
+    metric_names.append('_'.join(['epoch'] + lower))
 
 
 def log_params(exp_dir):
@@ -76,7 +80,7 @@ class _Base:
         if not use_gen:
             self.train = data_loader(self.dataset_name, self.model_name, 'train')
         else:
-            DataGenerator(self.dataset_name, self.model_name)
+            self.train = DataGenerator(self.dataset_name, self.model_name)
         self.x_valid, self.y_valid = data_loader(self.dataset_name, self.model_name, 'valid')
         self.x_evalu, self.y_evalu = data_loader(self.dataset_name, self.model_name, 'evalu')
 
@@ -86,7 +90,7 @@ class _Base:
 
     def _compile(self):
         self.model.compile(
-            experimental_steps_per_execution=100,
+            # experimental_steps_per_execution=100,
             loss='categorical_crossentropy',
             optimizer='adam',
             metrics=metrics)
@@ -129,20 +133,11 @@ class _Base:
         eva_callback = LambdaCallback(on_train_end=self._log_evalu)
         callbacks = [lnr_callback, his_callback, img_callback, eva_callback]
 
-        if not use_gen:
-            x_train, y_train = self.train
-            sample_weight = class_weight.compute_sample_weight('balanced', y_train)
-            self.model.fit(
-                x=x_train, y=y_train, sample_weight=sample_weight, batch_size=batch, epochs=epoch, verbose=2,
-                validation_data=(self.x_valid, self.y_valid), callbacks=callbacks
-            )
-        else:
-            generator = self.train  # (x_train, y_train, sample_weight)
-            self.model.fit(
-                x=generator, epochs=epoch, verbose=2,
-                validation_data=(self.x_valid, self.y_valid), callbacks=callbacks,
-                max_queue_size=10, workers=5
-            )
+        self.model.fit(
+            x=self.train, epochs=epoch, batch_size=batch,
+            validation_data=(self.x_valid, self.y_valid), verbose=2, callbacks=callbacks,
+            max_queue_size=10, workers=5
+        )
 
 
 class _FoldBase(_Base):
@@ -160,6 +155,8 @@ class _FoldBase(_Base):
         self.x_valid, self.y_valid = self.x_evalu.copy(), self.y_evalu.copy()
 
 
+# tf.data pipeline
+# WISE dataset performance
 # test set result
 # attention model
 # Phased LSTM

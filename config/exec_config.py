@@ -1,7 +1,6 @@
 from global_settings import FLAG
 import tensorflow as tf
 import subprocess
-import os
 
 gpu_devices = tf.config.list_physical_devices('GPU')
 cpu_devices = tf.config.list_physical_devices('CPU')
@@ -31,8 +30,8 @@ else:
 train_config = {
     "use_gen": False,
     "epoch": 100,
-    "batch": 128,
-    "metrics": ['Accuracy', 'Precision', 'Recall'],
+    "batch": 256,
+    "metrics": ['CategoricalAccuracy', 'Precision', 'Recall'],
 }
 
 evalu_config = {

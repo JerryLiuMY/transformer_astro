@@ -17,7 +17,7 @@ import multiprocessing
 
 thresh, sample = data_config['thresh'], data_config['sample']
 window, stride = data_config['window'], data_config['stride']
-(w, s) = data_config['ws']
+ws = data_config['ws']
 kfold = evalu_config['kfold']
 
 
@@ -95,7 +95,8 @@ def load_xy_nest(dataset_name, set_type, catalog_):
             x__, y_spar__ = _processing(dataset_name, cat_, data_df_)
             [x_.append(foo) for foo in x__]; [y_spar_.append(bar) for bar in y_spar__]
         elif set_type == 'evalu':
-            x_.append(_proc_dtdm(_load_dtdm(data_df_))); y_spar_.append([cat_])
+            (w, s) = ws[dataset_name]
+            x_.append(_proc_dtdm(_load_dtdm(data_df_), w, s)); y_spar_.append([cat_])
         else:
             drop_count_ += 1
 
@@ -103,10 +104,10 @@ def load_xy_nest(dataset_name, set_type, catalog_):
 
 
 def _processing(dataset_name, cat, data_df):
-    dtdm_org = _load_dtdm(data_df)
+    dtdm_org, (w, s) = _load_dtdm(data_df), ws[dataset_name]
     x_, y_spar_ = np.array([]).reshape([0, (window[dataset_name]-w)//s + 1, 2 * w]), np.array([]).reshape([0, 1])
     for i in range(0, np.shape(dtdm_org)[0] - (window[dataset_name] - 1), stride[dataset_name]):
-        dtdm_bin_ = _proc_dtdm(dtdm_org[i: i + window[dataset_name], :])
+        dtdm_bin_ = _proc_dtdm(dtdm_org[i: i + window[dataset_name], :], w, s)
         dtdm_bin_, cat_ = np.expand_dims(dtdm_bin_, axis=0), np.expand_dims([cat], axis=0)
         x_, y_spar_ = np.vstack([x_, dtdm_bin_]), np.vstack([y_spar_, cat_])
 
@@ -124,7 +125,7 @@ def _load_dtdm(data_df):
     return dtdm_org
 
 
-def _proc_dtdm(dtdm_org):
+def _proc_dtdm(dtdm_org, w, s):
     dtdm_bin = np.array([]).reshape(0, 2 * w)
     for i in range(0, np.shape(dtdm_org)[0] - (w - 1), s):
         dtdm_bin = np.vstack([dtdm_bin, dtdm_org[i: i + w, :].reshape(1, -1)])
@@ -133,8 +134,7 @@ def _proc_dtdm(dtdm_org):
 
 
 def save_one_hot(dataset_name):
-    catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
-    cats = []
+    catalog, cats = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0), []
     for cat in sorted(set(catalog['Class'])):
         if len(catalog[catalog['Class'] == cat]) >= thresh[dataset_name]:
             cats.append(cat)
