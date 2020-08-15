@@ -136,7 +136,7 @@ class _Base:
         callbacks = [lnr_callback, his_callback, img_callback, eva_callback]
 
         self.model.fit(
-            self.dataset_train, epochs=epoch, validation_data=self.dataset_valid, validation_steps=-1,
+            x=self.dataset_train, validation_data=self.dataset_valid, epochs=epoch,
             verbose=1, max_queue_size=10, workers=5, callbacks=callbacks
         )
 
