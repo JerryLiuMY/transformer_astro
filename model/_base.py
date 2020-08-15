@@ -2,7 +2,6 @@ import os
 import re
 import numpy as np
 import tensorflow as tf
-from sklearn.utils import class_weight
 from sklearn.metrics import confusion_matrix, classification_report
 from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
@@ -17,8 +16,7 @@ from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config, strategy
 
 use_gen, epoch = train_config['use_gen'], train_config['epoch']
-metrics, batch = train_config['metrics'], train_config['batch']
-metric_names = ['epoch_loss']
+metrics, metric_names = train_config['metrics'], ['epoch_loss']
 for metric in metrics:
     lower = [_.lower() for _ in re.findall('[A-Z][^A-Z]*', metric)]
     metric_names.append('_'.join(['epoch'] + lower))
@@ -78,11 +76,11 @@ class _Base:
 
     def _load_data(self):
         if not use_gen:
-            self.train = data_loader(self.dataset_name, self.model_name, 'train')
+            self.dataset_train = data_loader(self.dataset_name, self.model_name, 'train')
         else:
-            self.train = DataGenerator(self.dataset_name, self.model_name)
-        self.x_valid, self.y_valid = data_loader(self.dataset_name, self.model_name, 'valid')
-        self.x_evalu, self.y_evalu = data_loader(self.dataset_name, self.model_name, 'evalu')
+            self.dataset_train = DataGenerator(self.dataset_name, self.model_name)
+        self.dataset_valid = data_loader(self.dataset_name, self.model_name, 'valid')
+        self.dataset_evalu = data_loader(self.dataset_name, self.model_name, 'evalu')
 
     def _build(self):
         model = None
@@ -90,10 +88,10 @@ class _Base:
 
     def _compile(self):
         self.model.compile(
-            # experimental_steps_per_execution=100,
             loss='categorical_crossentropy',
             optimizer='adam',
-            metrics=metrics)
+            metrics=metrics,
+            experimental_steps_per_execution=50)
 
     @staticmethod
     def _lnr_schedule(step):
@@ -107,9 +105,13 @@ class _Base:
         return learn_rate
 
     def _log_confusion(self, step, logs=None):
-        max_arg = tf.math.argmax(self.model.predict(self.x_evalu), axis=1)
+        y_evalu = np.array([]).reshape(0, len(self.categories))
+        for x_evalue_, y_evalu_ in self.dataset_evalu.take(-1):
+            y_evalu = np.vstack([y_evalu, y_evalu_])
+        y_evalu_spar = self.encoder.inverse_transform(y_evalu)
+
+        max_arg = tf.math.argmax(self.model.predict(self.dataset_evalu), axis=1)
         y_predi = tf.one_hot(max_arg, depth=len(self.categories)).numpy()
-        y_evalu_spar = self.encoder.inverse_transform(self.y_evalu)
         y_predi_spar = self.encoder.inverse_transform(y_predi)
         matrix = np.around(confusion_matrix(y_evalu_spar, y_predi_spar, labels=self.categories), decimals=2)
         report = classification_report(y_evalu_spar, y_predi_spar, labels=self.categories, zero_division=0)
@@ -120,7 +122,7 @@ class _Base:
             tf.summary.image('Confusion Matrix', confusion_img, step=step)
 
     def _log_evalu(self, logs=None):
-        performances = self.model.evaluate(x=self.x_evalu, y=self.y_evalu)
+        performances = self.model.evaluate(self.dataset_evalu)
         with tf.summary.create_file_writer(self.hyp_path).as_default():
             hp.hparams(self.hyper_param)
             for m, p in list(zip(metric_names, performances)):
@@ -134,9 +136,8 @@ class _Base:
         callbacks = [lnr_callback, his_callback, img_callback, eva_callback]
 
         self.model.fit(
-            x=self.train, epochs=epoch, batch_size=batch,
-            validation_data=(self.x_valid, self.y_valid), verbose=2, callbacks=callbacks,
-            max_queue_size=10, workers=5
+            self.dataset_train, epochs=epoch, validation_data=self.dataset_valid, validation_steps=-1,
+            verbose=1, max_queue_size=10, workers=5, callbacks=callbacks
         )
 
 
@@ -148,15 +149,15 @@ class _FoldBase(_Base):
 
     def _load_data(self):
         if not use_gen:
-            self.train = fold_loader(self.dataset_name, self.model_name, 'train', self.fold)
+            self.dataset_train = fold_loader(self.dataset_name, self.model_name, 'train', self.fold)
         else:
-            self.train = FoldGenerator(self.dataset_name, self.model_name, self.fold)
-        self.x_evalu, self.y_evalu = fold_loader(self.dataset_name, self.model_name, 'evalu', self.fold)
-        self.x_valid, self.y_valid = self.x_evalu.copy(), self.y_evalu.copy()
+            self.dataset_train = FoldGenerator(self.dataset_name, self.model_name, self.fold)
+        self.dataset_evalu = fold_loader(self.dataset_name, self.model_name, 'evalu', self.fold)
+        self.dataset_valid = self.dataset_evalu.copy()
 
 
-# tf.data pipeline
-# WISE dataset performance
+# check working & validation step
 # test set result
+# tf.data pipeline
 # attention model
 # Phased LSTM
