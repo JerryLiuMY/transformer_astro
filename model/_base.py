@@ -91,7 +91,7 @@ class _Base:
             loss='categorical_crossentropy',
             optimizer='adam',
             metrics=metrics,
-            experimental_steps_per_execution=50)
+            experimental_steps_per_execution=100)
 
     @staticmethod
     def _lnr_schedule(step):
