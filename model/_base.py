@@ -156,8 +156,7 @@ class _FoldBase(_Base):
         self.dataset_valid = self.dataset_evalu.copy()
 
 
-# check working & validation step
-# test set result
-# tf.data pipeline
+# test set result  -- as number of timestep
 # attention model
 # Phased LSTM
+# tf.data pipeline
