@@ -3,7 +3,7 @@ import re
 import numpy as np
 import tensorflow as tf
 from sklearn.metrics import confusion_matrix, classification_report
-from tensorflow.keras.callbacks import LearningRateScheduler
+from tensorflow.keras.callbacks import LearningRateScheduler, ReduceLROnPlateau
 from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorflow.keras.backend import clear_session
 from tensorboard.plugins.hparams import api as hp
@@ -104,6 +104,20 @@ class _Base:
 
         return learn_rate
 
+    @staticmethod
+    def _rop_schedule():
+        rop_callback = ReduceLROnPlateau(
+            monitor='val_loss',
+            min_delta=0.001,
+            factor=0.5,
+            mode='min',
+            patience=10,
+            cooldown=5,
+            verbose=1,
+        )
+
+        return rop_callback
+
     def _log_confusion(self, step, logs=None):
         y_evalu = np.array([]).reshape(0, len(self.categories))
         for x_evalue_, y_evalu_ in self.dataset_evalu.take(-1):
@@ -156,7 +170,7 @@ class _FoldBase(_Base):
         self.dataset_valid = self.dataset_evalu.copy()
 
 
-# test set result  -- as number of timestep
-# attention model
-# Phased LSTM
-# tf.data pipeline
+# test set result  -- as number of timestep / test set only last / max pooling
+# transformer model
+# wait: tf.data pipeline
+# wait: TPU compatibility
