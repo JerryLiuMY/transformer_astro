@@ -4,11 +4,11 @@ import numpy as np
 import sklearn
 import pandas as pd
 import pickle
+import tensorflow as tf
 from global_settings import DATA_FOLDER
 from sklearn.utils import class_weight
 from config.exec_config import train_config
 from tensorflow.keras.utils import Sequence
-from tensorflow.data import Dataset
 from datetime import datetime
 from tools.utils import load_catalog, load_fold
 from tools.utils import load_xy
@@ -17,6 +17,8 @@ batch = train_config['batch']
 
 
 class BaseGenerator(Sequence):
+    # For better performance, use Dataset.from_generator with .prefetch, .interleave, .map and .cache
+    # (with vectorization and memory footprint reduction)
     def __init__(self, dataset_name, model_name):
         self.dataset_name = dataset_name
         self.model_name = model_name
@@ -74,9 +76,14 @@ def data_loader(dataset_name, model_name, set_type):
     with open(os.path.join(DATA_FOLDER, dataset_folder, set_type + '.pkl'), 'rb') as handle:
         x, y = pickle.load(handle)
 
-    dataset = Dataset.from_tensor_slices((x, y))
+    if set_type == 'train':
+        sample_weight = class_weight.compute_sample_weight('balanced', y)
+        dataset = tf.data.Dataset.from_tensor_slices((x, y, sample_weight))
+    else:
+        dataset = tf.data.Dataset.from_tensor_slices((x, y))
+    dataset = dataset.shuffle(np.shape(x)[0], reshuffle_each_iteration=True).batch(batch)
 
-    return x, y
+    return dataset
 
 
 def fold_loader(dataset_name, model_name, set_type, fold):
