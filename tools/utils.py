@@ -72,8 +72,11 @@ def load_xy(dataset_name, set_type, catalog):
     x, y_spar, drop_count = [], [], 0
     for result in tqdm(pool.imap(functools.partial(load_xy_nest, dataset_name, set_type), catalogs)):
         x_, y_spar_, drop_count_ = result
-        [x.append(foo) for foo in x_]; [y_spar.append(bar) for bar in y_spar_]; drop_count += drop_count_
-    pool.close(); pool.join()
+        [x.append(foo) for foo in x_]
+        [y_spar.append(bar) for bar in y_spar_]
+        drop_count += drop_count_
+    pool.close()
+    pool.join()
 
     print(f'Number of dropped samples: {drop_count}')
     x = pad_sequences(x, value=np.pi, dtype=np.float32, padding='post')
@@ -87,16 +90,15 @@ def load_xy_nest(dataset_name, set_type, catalog_):
     x_, y_spar_, drop_count_ = [], [], 0
     for cat_, path_ in tqdm(list(zip(cats_, paths_))):
         data_df_ = pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, path_))
-        data_df_.drop_duplicates(subset=['mjd'], keep='first', inplace=True)
-        data_df_.sort_values(by=['mjd'], inplace=True)
-        data_df_.reset_index(drop=True, inplace=True)
 
         if (set_type != 'evalu') and (np.shape(data_df_)[0] >= window[dataset_name]):
             x__, y_spar__ = _processing(dataset_name, cat_, data_df_)
-            [x_.append(foo) for foo in x__]; [y_spar_.append(bar) for bar in y_spar__]
+            [x_.append(foo) for foo in x__]
+            [y_spar_.append(bar) for bar in y_spar__]
         elif set_type == 'evalu':
             (w, s) = ws[dataset_name]
-            x_.append(_proc_dtdm(_load_dtdm(data_df_), w, s)); y_spar_.append([cat_])
+            x_.append(_proc_dtdm(_load_dtdm(data_df_), w, s))
+            y_spar_.append([cat_])
         else:
             drop_count_ += 1
 

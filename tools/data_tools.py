@@ -17,8 +17,6 @@ batch = train_config['batch']
 
 
 class BaseGenerator(Sequence):
-    # For better performance, use Dataset.from_generator with .prefetch, .interleave, .map and .cache
-    # (with vectorization and memory footprint reduction)
     def __init__(self, dataset_name, model_name):
         self.dataset_name = dataset_name
         self.model_name = model_name
