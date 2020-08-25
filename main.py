@@ -1,6 +1,5 @@
 import os
 import itertools
-import tensorflow as tf
 from tools.misc import get_exp_dir, get_log_dir
 from model._base import log_params
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
@@ -18,7 +17,6 @@ def run(dataset_name, model_name):
     exp_dir = get_exp_dir(log_dir); log_params(exp_dir)
     rnn_nums, rnn_dims, dnn_nums = rnn_nums_hp.domain.values, rnn_dims_hp.domain.values, dnn_nums_hp.domain.values
     for rnn_num, rnn_dim, dnn_num in itertools.product(rnn_nums, rnn_dims, dnn_nums):
-        tf.debugging.set_log_device_placement(True)
         hyper_param = {rnn_nums_hp: rnn_num, rnn_dims_hp: rnn_dim, dnn_nums_hp: dnn_num}
         model = {'sim': SimpleLSTM, 'pha': SimpleLSTM, 'att': Attention}[model_name]
         exp = model(dataset_name, model_name, hyper_param, exp_dir=exp_dir)

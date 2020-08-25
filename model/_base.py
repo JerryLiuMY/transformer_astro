@@ -71,6 +71,7 @@ class _Base:
         self.img_path = os.path.join(self.img_dir, self.exp_name)
         self.hyp_path = os.path.join(self.hyp_dir, self.exp_name)
         self.che_path = os.path.join(self.che_dir, self.exp_name)
+        if not os.path.isdir(self.che_path): os.mkdir(self.che_path)
 
     def _load_enco(self):
         encoder = one_hot_loader(self.dataset_name, self.model_name)
