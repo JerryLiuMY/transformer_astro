@@ -98,21 +98,36 @@ class _Base:
             metrics=metrics,
             experimental_steps_per_execution=100)
 
-    def _log_evalu(self, step, logs=None):
+    def run(self):
+        checkpoint = os.path.join(self.che_path, 'epoch_{epoch:02d}-val_acc_{val_categorical_accuracy:.3f}.hdf5')
+        lnr_callback = LearningRateScheduler(schedule=lnr_schedule, verbose=1)
+        his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
+        eva_callback = LambdaCallback(on_epoch_end=self._log_evalu)
+        img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
+        che_callback = ModelCheckpoint(filepath=checkpoint, save_weights_only=True, save_freq='epoch')
+        hyp_callback = LambdaCallback(on_train_end=self._log_hyper)
+        callbacks = [lnr_callback, his_callback, eva_callback, img_callback, che_callback, hyp_callback]
 
+        self.model.fit(
+            x=self.dataset_train, validation_data=self.dataset_valid, epochs=epoch,
+            verbose=1, max_queue_size=10, workers=5, callbacks=callbacks
+        )
+
+    def _log_evalu(self, step, logs=None):
         results = self.model.evaluate(self.dataset_evalu)
-        with tf.summary.create_file_writer(self.hyp_path).as_default():
+        eva_path = os.path.join(self.his_path, 'test'); create_paths(eva_path)
+        with tf.summary.create_file_writer(eva_path).as_default():
             for m, r in list(zip(metric_names, results)):
                 tf.summary.scalar(m, r, step=step)
 
     def _log_confusion(self, step, logs=None):
         y_evalu = np.array([]).reshape(0, len(self.categories))
-        for x_evalue_, y_evalu_ in self.dataset_evalu.take(-1):
-            y_evalu = np.vstack([y_evalu, y_evalu_])
-        y_evalu_spar = self.encoder.inverse_transform(y_evalu)
-
+        for x_evalu_, y_evalu_ in self.dataset_evalu.take(-1):
+            y_evalu = np.vstack([y_evalu, y_evalu_.numpy()])
         max_arg = tf.math.argmax(self.model.predict(self.dataset_evalu), axis=1)
         y_predi = tf.one_hot(max_arg, depth=len(self.categories)).numpy()
+
+        y_evalu_spar = self.encoder.inverse_transform(y_evalu)
         y_predi_spar = self.encoder.inverse_transform(y_predi)
         matrix = np.around(confusion_matrix(y_evalu_spar, y_predi_spar, labels=self.categories), decimals=2)
         report = classification_report(y_evalu_spar, y_predi_spar, labels=self.categories, zero_division=0)
@@ -128,21 +143,6 @@ class _Base:
             hp.hparams(self.hyper_param)
             for m, r in list(zip(metric_names, results)):
                 tf.summary.scalar(m, r, step=0)
-
-    def run(self):
-        checkpoint = os.path.join(self.che_path, 'epoch_{epoch:02d}-val_acc_{val_categorical_accuracy:.3f}.hdf5')
-        lnr_callback = LearningRateScheduler(schedule=lnr_schedule, verbose=1)
-        his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
-        eva_callback = LambdaCallback(on_epoch_end=self._log_evalu)
-        img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
-        che_callback = ModelCheckpoint(filepath=checkpoint, save_weights_only=True, save_freq='epoch', verbose=1)
-        hyp_callback = LambdaCallback(on_train_end=self._log_hyper)
-        callbacks = [lnr_callback, his_callback, eva_callback, img_callback, che_callback, hyp_callback]
-
-        self.model.fit(
-            x=self.dataset_train, validation_data=self.dataset_valid, epochs=epoch,
-            verbose=1, max_queue_size=10, workers=5, callbacks=callbacks
-        )
 
 
 class _FoldBase(_Base):
@@ -160,8 +160,8 @@ class _FoldBase(_Base):
         self.dataset_valid = self.dataset_evalu.copy()
 
 
-# tf.data pipeline
-# test set result  -- as number of timestep / test set only last
+# tf.data pipeline  -- processing + test data shape
+# test set result  -- test set only last
 
 # transformer model
 # wait: TPU compatibility

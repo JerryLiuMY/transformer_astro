@@ -77,9 +77,10 @@ def data_loader(dataset_name, model_name, set_type):
     if set_type == 'train':
         sample_weight = class_weight.compute_sample_weight('balanced', y)
         dataset = tf.data.Dataset.from_tensor_slices((x, y, sample_weight))
+        dataset = dataset.shuffle(np.shape(x)[0], reshuffle_each_iteration=True).batch(batch)
     else:
         dataset = tf.data.Dataset.from_tensor_slices((x, y))
-    dataset = dataset.shuffle(np.shape(x)[0], reshuffle_each_iteration=True).batch(batch)
+        dataset = dataset.batch(batch)
 
     return dataset
 
