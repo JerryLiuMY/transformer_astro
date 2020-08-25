@@ -1,16 +1,16 @@
 import functools
-import os
 import time
-import numpy as np
-from global_settings import LOG_FOLDER
 
 
+# Data Tools
 def one_hot_msg(func):
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         value = func(*args, **kwargs)
         print(f'Successfully loaded one-hot encoder')
         return value
+
     return wrapper
 
 
@@ -27,22 +27,7 @@ def data_msg(func):
     return wrapper
 
 
-def get_exp_dir(log_dir):
-    past_dirs = next(os.walk(log_dir))[1]
-    new_num = 0 if len(past_dirs) == 0 else np.max([int(past_dir.split('_')[-1]) for past_dir in past_dirs]) + 1
-    exp_dir = os.path.join(log_dir, '_'.join(['experiment', str(new_num)]))
-    os.mkdir(exp_dir)
-
-    return exp_dir
-
-
-def get_log_dir(dataset_name, model_name):
-    log_dir = os.path.join(LOG_FOLDER, f'{dataset_name}_{model_name}')
-    os.makedirs(log_dir, exist_ok=True)
-
-    return log_dir
-
-
+# Global
 def check_dataset_name(dataset_name):
     assert dataset_name.split('_')[0] in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'OGLE', 'Synthesis'], 'Invalid dataset name'
 
@@ -56,3 +41,4 @@ def check_set_type(set_type, is_fold=False):
         assert set_type in ['train', 'valid', 'evalu'], 'Invalid set type'
     else:
         assert set_type in ['train', 'evalu'], 'Invalid set type'
+

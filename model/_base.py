@@ -3,7 +3,7 @@ import re
 import numpy as np
 import tensorflow as tf
 from sklearn.metrics import confusion_matrix, classification_report
-from tensorflow.keras.callbacks import LearningRateScheduler, ReduceLROnPlateau, ModelCheckpoint
+from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorflow.keras.backend import clear_session
 from tensorboard.plugins.hparams import api as hp
@@ -12,8 +12,10 @@ from tools.exec_tools import plot_confusion, plot_to_image
 from tools.misc import check_dataset_name
 from tools.data_tools import data_loader, DataGenerator, one_hot_loader
 from tools.data_tools import fold_loader, FoldGenerator
+from tools.log_tools import create_dirs, create_paths, lnr_schedule
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config, strategy
+
 
 use_gen, epoch = train_config['use_gen'], train_config['epoch']
 metrics, metric_names = train_config['metrics'], ['epoch_loss']
@@ -40,6 +42,7 @@ class _Base:
         self.hyper_param = hyper_param
         self.exp_dir = exp_dir
         self._load_name()
+        self._load_dir()
         self._load_path()
         self._load_enco()
         self._load_data()
@@ -57,21 +60,19 @@ class _Base:
         print(f'--- Starting trial: {self.exp_name}')
         print({h.name: self.hyper_param[h] for h in self.hyper_param})
 
-    def _load_path(self):
+    def _load_dir(self):
         self.his_dir = os.path.join(self.exp_dir, 'scalar')
         self.img_dir = os.path.join(self.exp_dir, 'images')
         self.hyp_dir = os.path.join(self.exp_dir, 'params')
         self.che_dir = os.path.join(self.exp_dir, 'checks')
-        if not os.path.isdir(self.his_dir): os.mkdir(self.his_dir)
-        if not os.path.isdir(self.img_dir): os.mkdir(self.img_dir)
-        if not os.path.isdir(self.hyp_dir): os.mkdir(self.hyp_dir)
-        if not os.path.isdir(self.che_dir): os.mkdir(self.che_dir)
+        create_dirs(self.his_dir, self.img_dir, self.hyp_dir, self.che_dir)
 
+    def _load_path(self):
         self.his_path = os.path.join(self.his_dir, self.exp_name)
         self.img_path = os.path.join(self.img_dir, self.exp_name)
         self.hyp_path = os.path.join(self.hyp_dir, self.exp_name)
         self.che_path = os.path.join(self.che_dir, self.exp_name)
-        if not os.path.isdir(self.che_path): os.mkdir(self.che_path)
+        create_paths(self.his_path, self.img_path, self.hyp_path, self.che_path)
 
     def _load_enco(self):
         encoder = one_hot_loader(self.dataset_name, self.model_name)
@@ -97,30 +98,12 @@ class _Base:
             metrics=metrics,
             experimental_steps_per_execution=100)
 
-    @staticmethod
-    def _lnr_schedule(step):
-        begin_rate = 0.001
-        decay_rate = 0.7
-        decay_step = 50
+    def _log_evalu(self, step, logs=None):
 
-        learn_rate = begin_rate * np.power(decay_rate, np.divmod(step, decay_step)[0])
-        tf.summary.scalar('Learning Rate', data=learn_rate, step=step)
-
-        return learn_rate
-
-    @staticmethod
-    def _rop_schedule():
-        rop_callback = ReduceLROnPlateau(
-            monitor='val_loss',
-            min_delta=0.001,
-            factor=0.5,
-            mode='min',
-            patience=10,
-            cooldown=5,
-            verbose=1,
-        )
-
-        return rop_callback
+        results = self.model.evaluate(self.dataset_evalu)
+        with tf.summary.create_file_writer(self.hyp_path).as_default():
+            for m, r in list(zip(metric_names, results)):
+                tf.summary.scalar(m, r, step=step)
 
     def _log_confusion(self, step, logs=None):
         y_evalu = np.array([]).reshape(0, len(self.categories))
@@ -139,21 +122,22 @@ class _Base:
         with tf.summary.create_file_writer(self.img_path).as_default():
             tf.summary.image('Confusion Matrix', confusion_img, step=step)
 
-    def _log_evalu(self, logs=None):
-        performances = self.model.evaluate(self.dataset_evalu)
+    def _log_hyper(self, logs=None):
+        results = self.model.evaluate(self.dataset_evalu)
         with tf.summary.create_file_writer(self.hyp_path).as_default():
             hp.hparams(self.hyper_param)
-            for m, p in list(zip(metric_names, performances)):
-                tf.summary.scalar(m, p, step=0)
+            for m, r in list(zip(metric_names, results)):
+                tf.summary.scalar(m, r, step=0)
 
     def run(self):
         checkpoint = os.path.join(self.che_path, 'epoch_{epoch:02d}-val_acc_{val_categorical_accuracy:.3f}.hdf5')
-        lnr_callback = LearningRateScheduler(schedule=self._lnr_schedule, verbose=1)
+        lnr_callback = LearningRateScheduler(schedule=lnr_schedule, verbose=1)
         his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
+        eva_callback = LambdaCallback(on_epoch_end=self._log_evalu)
         img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
-        eva_callback = LambdaCallback(on_train_end=self._log_evalu)
         che_callback = ModelCheckpoint(filepath=checkpoint, save_weights_only=True, save_freq='epoch', verbose=1)
-        callbacks = [lnr_callback, his_callback, img_callback, eva_callback, che_callback]
+        hyp_callback = LambdaCallback(on_train_end=self._log_hyper)
+        callbacks = [lnr_callback, his_callback, eva_callback, img_callback, che_callback, hyp_callback]
 
         self.model.fit(
             x=self.dataset_train, validation_data=self.dataset_valid, epochs=epoch,

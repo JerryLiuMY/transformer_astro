@@ -1,6 +1,6 @@
 import os
 import itertools
-from tools.misc import get_exp_dir, get_log_dir
+from tools.log_tools import get_exp_dir, get_log_dir
 from model._base import log_params
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from model.lstm import SimpleLSTM, FoldSimpleLSTM
