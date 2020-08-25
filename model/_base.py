@@ -8,11 +8,10 @@ from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorflow.keras.backend import clear_session
 from tensorboard.plugins.hparams import api as hp
 from datetime import datetime
-from tools.exec_tools import plot_confusion, plot_to_image
-from tools.misc import check_dataset_name
 from tools.data_tools import data_loader, DataGenerator, one_hot_loader
 from tools.data_tools import fold_loader, FoldGenerator
-from tools.log_tools import create_dirs, create_paths, lnr_schedule
+from tools.log_tools import lnr_schedule, plot_confusion, plot_to_image
+from tools.exec_tools import create_dirs, create_paths, check_dataset_name
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config, strategy
 
@@ -95,8 +94,7 @@ class _Base:
         self.model.compile(
             loss='categorical_crossentropy',
             optimizer='adam',
-            metrics=metrics,
-            experimental_steps_per_execution=100)
+            metrics=metrics)
 
     def run(self):
         checkpoint = os.path.join(self.che_path, 'epoch_{epoch:02d}-val_acc_{val_categorical_accuracy:.3f}.hdf5')
@@ -114,7 +112,7 @@ class _Base:
         )
 
     def _log_evalu(self, step, logs=None):
-        results = self.model.evaluate(self.dataset_evalu)
+        results = self.model.evaluate(self.dataset_evalu, verbose=0)
         eva_path = os.path.join(self.his_path, 'test'); create_paths(eva_path)
         with tf.summary.create_file_writer(eva_path).as_default():
             for m, r in list(zip(metric_names, results)):
@@ -122,9 +120,9 @@ class _Base:
 
     def _log_confusion(self, step, logs=None):
         y_evalu = np.array([]).reshape(0, len(self.categories))
-        for x_evalu_, y_evalu_ in self.dataset_evalu.take(-1):
+        for x_evalu_, y_evalu_, _ in self.dataset_train.take(-1):
             y_evalu = np.vstack([y_evalu, y_evalu_.numpy()])
-        max_arg = tf.math.argmax(self.model.predict(self.dataset_evalu), axis=1)
+        max_arg = tf.math.argmax(self.model.predict(self.dataset_train), axis=1)
         y_predi = tf.one_hot(max_arg, depth=len(self.categories)).numpy()
 
         y_evalu_spar = self.encoder.inverse_transform(y_evalu)
@@ -138,7 +136,7 @@ class _Base:
             tf.summary.image('Confusion Matrix', confusion_img, step=step)
 
     def _log_hyper(self, logs=None):
-        results = self.model.evaluate(self.dataset_evalu)
+        results = self.model.evaluate(self.dataset_evalu, verbose=0)
         with tf.summary.create_file_writer(self.hyp_path).as_default():
             hp.hparams(self.hyper_param)
             for m, r in list(zip(metric_names, results)):
@@ -160,8 +158,10 @@ class _FoldBase(_Base):
         self.dataset_valid = self.dataset_evalu.copy()
 
 
-# tf.data pipeline  -- processing + test data shape
-# test set result  -- test set only last
+# lambda callback solve
+# test set result -- test set only last
+# tf.data pipeline -- processing
+# test data change
 
 # transformer model
 # wait: TPU compatibility

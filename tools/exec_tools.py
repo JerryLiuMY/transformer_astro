@@ -1,44 +1,45 @@
-import io
-import itertools
+import os
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-import tensorflow as tf
+from global_settings import LOG_FOLDER
 
 
-def plot_confusion(matrix, report, categories):
-    fig = plt.figure(figsize=(9, 12)); gs = gridspec.GridSpec(3, 2)
-    ax1 = plt.subplot(gs[0:2, :]); ax2 = plt.subplot(gs[2, :])
+# create new directories 
+def get_log_dir(dataset_name, model_name):
+    log_dir = os.path.join(LOG_FOLDER, f'{dataset_name}_{model_name}')
+    os.makedirs(log_dir, exist_ok=True)
 
-    im = ax1.imshow(matrix, interpolation='nearest', cmap='Blues')
-    fig.colorbar(im, ax=ax1)
-    ax1.set_title('Confusion Matrix')
-    ax1.set_xticks(np.arange(len(categories))); ax1.set_xticklabels(categories, rotation=45)
-    ax1.set_yticks(np.arange(len(categories))); ax1.set_yticklabels(categories)
-
-    threshold = 0.5 * matrix.max()
-    for i, j in itertools.product(range(matrix.shape[0]), range(matrix.shape[1])):
-        color = 'white' if matrix[i, j] > threshold else 'black'
-        ax1.text(j, i, matrix[i, j], horizontalalignment='center', color=color)
-        ax1.set_ylabel('True label')
-        ax1.set_xlabel('Predicted label')
-
-    ax2.set_title('Classification Report', position=(0.4, 1))
-    ax2.text(0.35, 0.6, report, size=12, family='monospace', ha='center', va='center')
-    ax2.axis('off')
-
-    plt.tight_layout()
-
-    return fig
+    return log_dir
 
 
-def plot_to_image(figure):
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    plt.close(figure)
-    buf.seek(0)
+def get_exp_dir(log_dir):
+    past_dirs = next(os.walk(log_dir))[1]
+    new_num = 0 if len(past_dirs) == 0 else np.max([int(past_dir.split('_')[-1]) for past_dir in past_dirs]) + 1
+    exp_dir = os.path.join(log_dir, '_'.join(['experiment', str(new_num)]))
+    os.mkdir(exp_dir)
 
-    img = tf.image.decode_png(buf.getvalue(), channels=4)
-    img = tf.expand_dims(img, 0)
+    return exp_dir
 
-    return img
+
+def create_dirs(*args):
+    for path in args:
+        if not os.path.isdir(path):
+            os.mkdir(path)
+
+
+create_paths = create_dirs
+
+
+# global check
+def check_dataset_name(dataset_name):
+    assert dataset_name.split('_')[0] in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'OGLE', 'Synthesis'], 'Invalid dataset name'
+
+
+def check_model_name(model_name):
+    assert model_name in ['sim', 'pha', 'att'], 'Invalid model name'
+
+
+def check_set_type(set_type, is_fold=False):
+    if not is_fold:
+        assert set_type in ['train', 'valid', 'evalu'], 'Invalid set type'
+    else:
+        assert set_type in ['train', 'evalu'], 'Invalid set type'
