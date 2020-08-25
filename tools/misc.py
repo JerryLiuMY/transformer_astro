@@ -2,7 +2,7 @@ import functools
 import time
 
 
-# Data Tools
+# data tools
 def one_hot_msg(func):
 
     @functools.wraps(func)
@@ -27,7 +27,7 @@ def data_msg(func):
     return wrapper
 
 
-# Global
+# global check
 def check_dataset_name(dataset_name):
     assert dataset_name.split('_')[0] in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'OGLE', 'Synthesis'], 'Invalid dataset name'
 

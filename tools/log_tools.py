@@ -5,13 +5,11 @@ from global_settings import LOG_FOLDER
 from tensorflow.python.keras.callbacks import ReduceLROnPlateau
 
 
-def create_dirs(*args):
-    for path in args:
-        if not os.path.isdir(path):
-            os.mkdir(path)
+def get_log_dir(dataset_name, model_name):
+    log_dir = os.path.join(LOG_FOLDER, f'{dataset_name}_{model_name}')
+    os.makedirs(log_dir, exist_ok=True)
 
-
-create_paths = create_dirs
+    return log_dir
 
 
 def get_exp_dir(log_dir):
@@ -23,11 +21,13 @@ def get_exp_dir(log_dir):
     return exp_dir
 
 
-def get_log_dir(dataset_name, model_name):
-    log_dir = os.path.join(LOG_FOLDER, f'{dataset_name}_{model_name}')
-    os.makedirs(log_dir, exist_ok=True)
+def create_dirs(*args):
+    for path in args:
+        if not os.path.isdir(path):
+            os.mkdir(path)
 
-    return log_dir
+
+create_paths = create_dirs
 
 
 def lnr_schedule(step):
