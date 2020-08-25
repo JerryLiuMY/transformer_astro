@@ -178,7 +178,8 @@ class _FoldBase(_Base):
 
 # tf.data pipeline
 # test set result  -- as number of timestep / test set only last
+
 # transformer model
 # wait: TPU compatibility
-# transformer presentation
+# Transformer presentation & report
 # BERT presentation
