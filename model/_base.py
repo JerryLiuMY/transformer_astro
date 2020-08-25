@@ -3,7 +3,7 @@ import re
 import numpy as np
 import tensorflow as tf
 from sklearn.metrics import confusion_matrix, classification_report
-from tensorflow.keras.callbacks import LearningRateScheduler, ReduceLROnPlateau
+from tensorflow.keras.callbacks import LearningRateScheduler, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorflow.keras.backend import clear_session
 from tensorboard.plugins.hparams import api as hp
@@ -61,13 +61,16 @@ class _Base:
         self.his_dir = os.path.join(self.exp_dir, 'scalar')
         self.img_dir = os.path.join(self.exp_dir, 'images')
         self.hyp_dir = os.path.join(self.exp_dir, 'params')
+        self.che_dir = os.path.join(self.exp_dir, 'checks')
         if not os.path.isdir(self.his_dir): os.mkdir(self.his_dir)
         if not os.path.isdir(self.img_dir): os.mkdir(self.img_dir)
         if not os.path.isdir(self.hyp_dir): os.mkdir(self.hyp_dir)
+        if not os.path.isdir(self.che_dir): os.mkdir(self.che_dir)
 
         self.his_path = os.path.join(self.his_dir, self.exp_name)
         self.img_path = os.path.join(self.img_dir, self.exp_name)
         self.hyp_path = os.path.join(self.hyp_dir, self.exp_name)
+        self.che_path = os.path.join(self.che_dir, self.exp_name)
 
     def _load_enco(self):
         encoder = one_hot_loader(self.dataset_name, self.model_name)
@@ -143,11 +146,13 @@ class _Base:
                 tf.summary.scalar(m, p, step=0)
 
     def run(self):
+        checkpoint = os.path.join(self.che_path, 'epoch_{epoch:02d}-val_acc_{val_categorical_accuracy:.3f}.hdf5')
         lnr_callback = LearningRateScheduler(schedule=self._lnr_schedule, verbose=1)
         his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
         img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
         eva_callback = LambdaCallback(on_train_end=self._log_evalu)
-        callbacks = [lnr_callback, his_callback, img_callback, eva_callback]
+        che_callback = ModelCheckpoint(filepath=checkpoint, save_weights_only=True, save_freq='epoch', verbose=1)
+        callbacks = [lnr_callback, his_callback, img_callback, eva_callback, che_callback]
 
         self.model.fit(
             x=self.dataset_train, validation_data=self.dataset_valid, epochs=epoch,
@@ -170,7 +175,9 @@ class _FoldBase(_Base):
         self.dataset_valid = self.dataset_evalu.copy()
 
 
-# test set result  -- as number of timestep / test set only last / max pooling
+# tf.data pipeline
+# test set result  -- as number of timestep / test set only last
 # transformer model
-# wait: tf.data pipeline
 # wait: TPU compatibility
+# transformer presentation
+# BERT presentation

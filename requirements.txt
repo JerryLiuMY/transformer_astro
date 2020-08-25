@@ -10,3 +10,5 @@ tensorflow
 tensorboard
 scikit-learn==0.23.1
 imbalanced-learn
+pyyaml
+h5py
