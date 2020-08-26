@@ -19,7 +19,7 @@ class SimpleLSTM(_Base):
 
     def _build(self):
         model = Sequential()
-        model.add(Masking(mask_value=np.pi, dtype=np.float32, input_shape=(None, ws[self.dataset_name][0] * 2)))
+        model.add(Masking(mask_value=3.14159, dtype=np.float32, input_shape=(None, ws[self.dataset_name][0] * 2)))
 
         for _ in range(self.hyper_param[rnn_nums_hp]):
             # foo = True if _ < self.hyper_param[rnn_nums_hp] - 1 else False

@@ -79,7 +79,7 @@ def load_xy(dataset_name, set_type, catalog):
     pool.join()
 
     print(f'Number of dropped samples: {drop_count}')
-    x = pad_sequences(x, value=np.pi, dtype=np.float32, padding='post')
+    x = pad_sequences(x, value=3.14159, dtype=np.float32, padding='post')
     x, y_spar = np.array(x), np.array(y_spar)
 
     return x, y_spar

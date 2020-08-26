@@ -100,7 +100,7 @@ class _Base:
         lnr_callback = LearningRateScheduler(schedule=lnr_schedule, verbose=1)
         his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
         img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
-        che_callback = ModelCheckpoint(filepath=checkpoint, save_weights_only=True, save_freq='epoch')
+        che_callback = ModelCheckpoint(filepath=checkpoint, save_weights_only=True)
         hyp_callback = LambdaCallback(on_train_end=self._log_hyper)
         callbacks = [lnr_callback, his_callback, img_callback, che_callback, hyp_callback]
 
@@ -109,7 +109,7 @@ class _Base:
             verbose=1, max_queue_size=10, workers=5, callbacks=callbacks
         )
 
-    def _log_confusion(self, step, logs=None):
+    def _log_confusion(self, step, logs):
         y_evalu = np.array([]).reshape(0, len(self.categories))
         for x_evalu_, y_evalu_ in self.dataset_evalu.take(-1):
             y_evalu = np.vstack([y_evalu, y_evalu_.numpy()])
@@ -131,7 +131,7 @@ class _Base:
         with tf.summary.create_file_writer(self.hyp_path).as_default():
             hp.hparams(self.hyper_param)
             for m, r in list(zip(metric_names, results)):
-                tf.summary.scalar(m, r, step=0)
+                tf.summary.scalar(m, r, step=epoch)
 
 
 class _FoldBase(_Base):
