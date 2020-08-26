@@ -3,7 +3,7 @@ import numpy as np
 from global_settings import LOG_FOLDER
 
 
-# create new directories 
+# create new directories
 def get_log_dir(dataset_name, model_name):
     log_dir = os.path.join(LOG_FOLDER, f'{dataset_name}_{model_name}')
     os.makedirs(log_dir, exist_ok=True)
