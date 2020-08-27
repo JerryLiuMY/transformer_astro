@@ -1,5 +1,5 @@
 import matplotlib.gridspec as gridspec
-from tools.utils import load_catalog
+from tools.data_tools import load_catalog
 import matplotlib.pyplot as plt
 from global_settings import DATA_FOLDER
 import numpy as np

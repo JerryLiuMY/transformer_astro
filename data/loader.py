@@ -10,8 +10,8 @@ from sklearn.utils import class_weight
 from config.exec_config import train_config
 from tensorflow.keras.utils import Sequence
 from datetime import datetime
-from tools.utils import load_catalog, load_fold
-from tools.utils import load_xy
+from tools.data_tools import load_catalog, load_fold
+from tools.data_tools import load_xy
 from tools.misc import one_hot_msg, data_msg
 from tools.exec_tools import check_model_name, check_set_type
 

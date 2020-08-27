@@ -6,7 +6,7 @@ import pickle
 from tqdm import tqdm_notebook
 from global_settings import DATA_FOLDER
 from sklearn.preprocessing import MinMaxScaler
-from tools.utils import load_catalog
+from tools.data_tools import load_catalog
 
 
 def std(dataset_name='OGLE'):
