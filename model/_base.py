@@ -70,7 +70,6 @@ class _Base:
         self.img_path = os.path.join(self.img_dir, self.exp_name)
         self.hyp_path = os.path.join(self.hyp_dir, self.exp_name)
         self.che_path = os.path.join(self.che_dir, self.exp_name)
-        create_paths(self.his_path, self.img_path, self.hyp_path, self.che_path)
 
     def _load_enco(self):
         encoder = one_hot_loader(self.dataset_name, self.model_name)
@@ -96,6 +95,7 @@ class _Base:
             metrics=metrics)
 
     def run(self):
+        create_paths(self.his_path, self.img_path, self.hyp_path, self.che_path)
         checkpoint = os.path.join(self.che_path, 'epoch_{epoch:02d}-val_acc_{val_categorical_accuracy:.3f}.hdf5')
         lnr_callback = LearningRateScheduler(schedule=lnr_schedule, verbose=1)
         his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)

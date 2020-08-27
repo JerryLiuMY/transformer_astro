@@ -12,7 +12,7 @@ sns.set()
 
 
 def plot_timestep(dataset_name, model_name, exp_num, hyper_param, best_last):
-    # get model
+    # get model & make prediction
     assert best_last in ['best', 'last'], 'Invalid best_last type'
     exp_dir = os.path.join(LOG_FOLDER, f'{dataset_name}_{model_name}', f'experiment_{exp_num}')
     mod_path = get_path(exp_dir, hyper_param, best_last)
@@ -20,12 +20,12 @@ def plot_timestep(dataset_name, model_name, exp_num, hyper_param, best_last):
         exp = SimpleLSTM(dataset_name, model_name, hyper_param, exp_dir=exp_dir)
         exp.model.load_weights(mod_path)
         model = Model(inputs=exp.model.inputs, outputs=exp.model.get_layer('softmax').output)
+        y_predi_seq = model.predict(exp.dataset_evalu)
+        y_evalu = np.array([]).reshape(0, len(exp.categories))
+        for x_evalu_, y_evalu_ in exp.dataset_evalu.take(-1):
+            y_evalu = np.vstack([y_evalu, y_evalu_.numpy()])
 
     # evaluate accuracy
-    y_evalu = np.array([]).reshape(0, len(exp.categories))
-    for x_evalu_, y_evalu_ in exp.dataset_evalu.take(-1):
-        y_evalu = np.vstack([y_evalu, y_evalu_.numpy()])
-    y_predi_seq = model.predict(exp.dataset_evalu)
     acc_seq, metric = np.array([]), tf.keras.metrics.CategoricalAccuracy()
     for step in tqdm_notebook(range(np.shape(y_predi_seq)[1])):
         metric.update_state(y_evalu, y_predi_seq[:, step, :])
