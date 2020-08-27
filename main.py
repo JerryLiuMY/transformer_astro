@@ -18,7 +18,7 @@ def run(dataset_name, model_name):
     rnn_nums, rnn_dims, dnn_nums = rnn_nums_hp.domain.values, rnn_dims_hp.domain.values, dnn_nums_hp.domain.values
     for rnn_num, rnn_dim, dnn_num in itertools.product(rnn_nums, rnn_dims, dnn_nums):
         hyper_param = {rnn_nums_hp: rnn_num, rnn_dims_hp: rnn_dim, dnn_nums_hp: dnn_num}
-        model = {'sim': SimpleLSTM, 'pha': SimpleLSTM, 'att': Transformer}[model_name]
+        model = {'sim': SimpleLSTM, 'tra': Transformer}[model_name]
         exp = model(dataset_name, model_name, hyper_param, exp_dir=exp_dir)
         exp.run()
 
@@ -27,7 +27,7 @@ def run_fold(dataset_name, model_name, hyper_param):
     log_dir = get_log_dir(dataset_name, model_name)
     fold_dir = os.path.join(log_dir, 'fold'); os.makedirs(fold_dir, exist_ok=False)
     for fold in map(str, range(0, 10)):
-        fold_model = {'sim': FoldSimpleLSTM, 'pha': FoldSimpleLSTM, 'att': FoldTransformer}[model_name]
+        fold_model = {'sim': FoldSimpleLSTM, 'tra': FoldTransformer}[model_name]
         fold_exp = fold_model(dataset_name, model_name, hyper_param, exp_dir=fold_dir, fold=fold)
         fold_exp.run()
 

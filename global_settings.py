@@ -1,4 +1,4 @@
-FLAG = 'colab'
+FLAG = 'local'
 assert FLAG in ['local', 'colab', 'floyd'], 'Invalid flag'
 
 if FLAG == 'local':

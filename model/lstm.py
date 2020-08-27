@@ -18,8 +18,9 @@ class SimpleLSTM(_Base):
         super().__init__(dataset_name, model_name, hyper_param, exp_dir)
 
     def _build(self):
+        # WARNING: Masking is only supported in the CPU environment (not supported for CuDNN RNNs)
         model = Sequential()
-        model.add(Masking(mask_value=3.14159, dtype=np.float32, input_shape=(None, ws[self.dataset_name][0] * 2)))
+        model.add(Masking(mask_value=np.float32(3.14159), input_shape=(None, ws[self.dataset_name][0] * 2)))
 
         for _ in range(self.hyper_param[rnn_nums_hp]):
             # foo = True if _ < self.hyper_param[rnn_nums_hp] - 1 else False
@@ -38,7 +39,7 @@ class SimpleLSTM(_Base):
             model.add(LayerNormalization())
             model.add(ReLU())
 
-        model.add(TimeDistributed(Dense(units=len(self.categories), activation='softmax')))
+        model.add(TimeDistributed(Dense(units=len(self.categories), activation='softmax'), name='softmax'))
         model.add(GlobalAveragePooling1D(data_format='channels_last'))
 
         self.model = model

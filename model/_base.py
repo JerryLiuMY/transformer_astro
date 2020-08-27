@@ -101,7 +101,7 @@ class _Base:
         his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
         img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
         che_callback = ModelCheckpoint(filepath=checkpoint, save_weights_only=True)
-        hyp_callback = LambdaCallback(on_train_end=self._log_hyper)
+        hyp_callback = hp.KerasCallback(self.hyp_path, self.hyper_param)
         callbacks = [lnr_callback, his_callback, img_callback, che_callback, hyp_callback]
 
         self.model.fit(
@@ -111,9 +111,9 @@ class _Base:
 
     def _log_confusion(self, step, logs):
         y_evalu = np.array([]).reshape(0, len(self.categories))
-        for x_evalu_, y_evalu_ in self.dataset_evalu.take(-1):
+        for x_evalu_, y_evalu_ in self.dataset_valid.take(-1):
             y_evalu = np.vstack([y_evalu, y_evalu_.numpy()])
-        max_arg = tf.math.argmax(self.model.predict(self.dataset_evalu), axis=1)
+        max_arg = tf.math.argmax(self.model.predict(self.dataset_valid), axis=1)
         y_predi = tf.one_hot(max_arg, depth=len(self.categories)).numpy()
 
         y_evalu_spar = self.encoder.inverse_transform(y_evalu)
@@ -125,13 +125,6 @@ class _Base:
 
         with tf.summary.create_file_writer(self.img_path).as_default():
             tf.summary.image('Confusion Matrix', confusion_img, step=step)
-
-    def _log_hyper(self, logs=None):
-        results = self.model.evaluate(self.dataset_evalu, verbose=0)
-        with tf.summary.create_file_writer(self.hyp_path).as_default():
-            hp.hparams(self.hyper_param)
-            for m, r in list(zip(metric_names, results)):
-                tf.summary.scalar(m, r, step=epoch)
 
 
 class _FoldBase(_Base):
@@ -145,8 +138,7 @@ class _FoldBase(_Base):
             self.dataset_train = fold_loader(self.dataset_name, self.model_name, 'train', self.fold)
         else:
             self.dataset_train = FoldGenerator(self.dataset_name, self.model_name, self.fold)
-        self.dataset_evalu = fold_loader(self.dataset_name, self.model_name, 'evalu', self.fold)
-        self.dataset_valid = self.dataset_evalu.copy()
+        self.dataset_valid = fold_loader(self.dataset_name, self.model_name, 'evalu', self.fold)
 
 
 # test set result -- test set only last
