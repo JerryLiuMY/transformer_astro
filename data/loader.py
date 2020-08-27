@@ -13,7 +13,6 @@ from datetime import datetime
 from tools.data_tools import load_catalog, load_fold
 from tools.data_tools import load_xy
 from tools.misc import one_hot_msg, data_msg
-from tools.exec_tools import check_model_name, check_set_type
 
 batch = train_config['batch']
 
@@ -71,7 +70,6 @@ def one_hot_loader(dataset_name, model_name):
 
 @data_msg
 def data_loader(dataset_name, model_name, set_type):
-    check_model_name(model_name); check_set_type(set_type)
     dataset_folder = '_'.join([dataset_name, model_name])
     with open(os.path.join(DATA_FOLDER, dataset_folder, set_type + '.pkl'), 'rb') as handle:
         x, y = pickle.load(handle)
@@ -88,7 +86,6 @@ def data_loader(dataset_name, model_name, set_type):
 
 
 def fold_loader(dataset_name, model_name, set_type, fold):
-    check_model_name(model_name); check_set_type(set_type, is_fold=True)
     print(f'{datetime.now()} Loading {dataset_name} {set_type} set fold {fold}')
 
     catalog = load_fold(dataset_name, set_type, fold)
@@ -101,7 +98,6 @@ def fold_loader(dataset_name, model_name, set_type, fold):
 
 
 def one_hot_saver(dataset_name, model_name):
-    check_model_name(model_name)
     encoder = pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'))
     dataset_folder = '_'.join([dataset_name, model_name])
     with open(os.path.join(DATA_FOLDER, dataset_folder, 'encoder.pkl'), 'wb') as handle:
@@ -109,7 +105,6 @@ def one_hot_saver(dataset_name, model_name):
 
 
 def data_saver(dataset_name, model_name, set_type):
-    check_model_name(model_name); check_set_type(set_type)
     print(f'{datetime.now()} Loading {dataset_name} {set_type} set')
 
     catalog = load_catalog(dataset_name, set_type)

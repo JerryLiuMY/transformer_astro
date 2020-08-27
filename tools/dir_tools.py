@@ -26,18 +26,7 @@ def create_dirs(*args):
             os.mkdir(path)
 
 
-create_paths = create_dirs
-
-
 # global check
-def check_dataset_name(dataset_name):
-    assert dataset_name.split('_')[0] in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'OGLE', 'Synthesis'], 'Invalid dataset name'
-
-
-def check_model_name(model_name):
-    assert model_name in ['sim', 'pha', 'att'], 'Invalid model name'
-
-
 def check_set_type(set_type, is_fold=False):
     if not is_fold:
         assert set_type in ['train', 'valid', 'evalu'], 'Invalid set type'

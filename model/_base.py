@@ -10,7 +10,7 @@ from datetime import datetime
 from data.loader import data_loader, DataGenerator, one_hot_loader
 from data.loader import fold_loader, FoldGenerator
 from tools.log_tools import lnr_schedule, plot_confusion, fig_to_img
-from tools.exec_tools import create_dirs, create_paths, check_dataset_name
+from tools.dir_tools import create_dirs
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config, strategy
 
@@ -33,7 +33,6 @@ class _Base:
 
     def __init__(self, dataset_name, model_name, hyper_param, exp_dir):
         clear_session()
-        check_dataset_name(dataset_name)
         self.dataset_name = dataset_name
         self.model_name = model_name
         self.hyper_param = hyper_param
@@ -94,7 +93,7 @@ class _Base:
             metrics=metrics)
 
     def run(self):
-        create_paths(self.his_path, self.img_path, self.hyp_path, self.che_path)
+        create_dirs(self.his_path, self.img_path, self.hyp_path, self.che_path)
         checkpoint = os.path.join(self.che_path, 'epoch_{epoch:02d}-val_acc_{val_categorical_accuracy:.3f}.hdf5')
         lnr_callback = LearningRateScheduler(schedule=lnr_schedule, verbose=1)
         his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)

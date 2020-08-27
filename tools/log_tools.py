@@ -1,13 +1,10 @@
 import io
 import itertools
-from datetime import datetime
 import numpy as np
-import seaborn as sns
 import tensorflow as tf
 from matplotlib import pyplot as plt, gridspec as gridspec
 from tensorflow.python.keras.callbacks import ReduceLROnPlateau
 from sklearn.metrics import confusion_matrix, classification_report
-from tqdm import tqdm_notebook
 
 
 def lnr_schedule(step):
@@ -74,21 +71,3 @@ def fig_to_img(figure):
 
     return confusion_img
 
-
-def plot_timesteps(y_evalu, y_predi_seq):
-    # evaluate accuracy
-    print(f'{datetime.now()} Plotting time step figure')
-    acc_seq, metric = np.array([]), tf.keras.metrics.CategoricalAccuracy()
-    for step in tqdm_notebook(range(np.shape(y_predi_seq)[1])):
-        metric.update_state(y_evalu, y_predi_seq[:, step, :])
-        acc_seq = np.append(acc_seq, metric.result().numpy())
-
-    # plot
-    with sns.axes_style("darkgrid"):
-        timesteps_fig, ax = plt.subplots(figsize=(12, 6))
-        ax.plot(acc_seq)
-        ax.set_xlabel('time steps')
-        ax.set_ylabel('test categorical accuracy')
-        plt.show()
-
-    return timesteps_fig

@@ -1,15 +1,13 @@
 import os
 from datetime import datetime
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
-from global_settings import LOG_FOLDER
 from model.lstm import SimpleLSTM
 
 
-def get_exp(dataset_name, model_name, exp_num, hyper_param, best_last):
+def get_exp(dataset_name, model_name, hyper_param, exp_dir, best_last):
     # input check
     print(f'{datetime.now()} Making prediction')
     assert best_last in ['best', 'last'], 'Invalid best_last type'
-    exp_dir = os.path.join(LOG_FOLDER, f'{dataset_name}_{model_name}', f'experiment_{exp_num}')
 
     # get che_path
     che_dir, exp_name = os.path.join(exp_dir, 'checks'), None
