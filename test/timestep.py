@@ -11,20 +11,7 @@ from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 sns.set()
 
 
-def plot_timestep(dataset_name, model_name, exp_num, hyper_param, best_last):
-    # get model & make prediction
-    assert best_last in ['best', 'last'], 'Invalid best_last type'
-    exp_dir = os.path.join(LOG_FOLDER, f'{dataset_name}_{model_name}', f'experiment_{exp_num}')
-    mod_path = get_path(exp_dir, hyper_param, best_last)
-    with tf.device('/CPU:0'):
-        exp = SimpleLSTM(dataset_name, model_name, hyper_param, exp_dir=exp_dir)
-        exp.model.load_weights(mod_path)
-        model = Model(inputs=exp.model.inputs, outputs=exp.model.get_layer('softmax').output)
-        y_predi_seq = model.predict(exp.dataset_evalu)
-        y_evalu = np.array([]).reshape(0, len(exp.categories))
-        for x_evalu_, y_evalu_ in exp.dataset_evalu.take(-1):
-            y_evalu = np.vstack([y_evalu, y_evalu_.numpy()])
-
+def plot_timestep(y_evalu, y_predi_seq):
     # evaluate accuracy
     acc_seq, metric = np.array([]), tf.keras.metrics.CategoricalAccuracy()
     for step in tqdm_notebook(range(np.shape(y_predi_seq)[1])):
@@ -38,6 +25,23 @@ def plot_timestep(dataset_name, model_name, exp_num, hyper_param, best_last):
     ax.set_ylabel('test categorical accuracy')
 
     return fig
+
+
+def get_pred(dataset_name, model_name, exp_num, hyper_param, best_last):
+    # get model & make prediction
+    assert best_last in ['best', 'last'], 'Invalid best_last type'
+    exp_dir = os.path.join(LOG_FOLDER, f'{dataset_name}_{model_name}', f'experiment_{exp_num}')
+    mod_path = get_path(exp_dir, hyper_param, best_last)
+    with tf.device('/CPU:0'):
+        exp = SimpleLSTM(dataset_name, model_name, hyper_param, exp_dir=exp_dir)
+        exp.model.load_weights(mod_path)
+        model = Model(inputs=exp.model.inputs, outputs=exp.model.get_layer('softmax').output)
+        y_predi_seq = model.predict(exp.dataset_evalu)
+        y_evalu = np.array([]).reshape(0, len(exp.categories))
+        for x_evalu_, y_evalu_ in exp.dataset_evalu.take(-1):
+            y_evalu = np.vstack([y_evalu, y_evalu_.numpy()])
+
+    return y_evalu, y_predi_seq
 
 
 def get_path(exp_dir, hyper_param, best_last):
@@ -68,5 +72,6 @@ def get_path(exp_dir, hyper_param, best_last):
     return mod_path
 
 
-if __name__ == '__main__':
-    plot_timestep('ASAS', 'sim', '10', {rnn_nums_hp: 2, rnn_dims_hp: 70, dnn_nums_hp: 2}, 'last')
+# if __name__ == '__main__':
+#     y_evalu, y_predi_seq = get_pred('ASAS', 'sim', '10', {rnn_nums_hp: 2, rnn_dims_hp: 70, dnn_nums_hp: 2}, 'last')
+#     plot_timestep(y_evalu, y_predi_seq)
