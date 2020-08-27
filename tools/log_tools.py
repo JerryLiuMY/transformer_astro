@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow as tf
 from matplotlib import pyplot as plt, gridspec as gridspec
 from tensorflow.python.keras.callbacks import ReduceLROnPlateau
+from sklearn.metrics import confusion_matrix, classification_report
 
 
 def lnr_schedule(step):
@@ -31,9 +32,11 @@ def rop_schedule():
     return rop_callback
 
 
-def plot_confusion(matrix, report, categories):
-    fig = plt.figure(figsize=(9, 12)); gs = gridspec.GridSpec(3, 2)
-    ax1 = plt.subplot(gs[0:2, :]); ax2 = plt.subplot(gs[2, :])
+def plot_confusion(y_evalu_spar, y_predi_spar, categories):
+    matrix = np.around(confusion_matrix(y_evalu_spar, y_predi_spar, labels=categories), decimals=2)
+    report = classification_report(y_evalu_spar, y_predi_spar, labels=categories, zero_division=0)
+    fig, gs = plt.figure(figsize=(9, 12)), gridspec.GridSpec(3, 2)
+    ax1, ax2 = plt.subplot(gs[0:2, :]), plt.subplot(gs[2, :])
 
     im = ax1.imshow(matrix, interpolation='nearest', cmap='Blues')
     fig.colorbar(im, ax=ax1)
@@ -41,7 +44,7 @@ def plot_confusion(matrix, report, categories):
     ax1.set_xticks(np.arange(len(categories))); ax1.set_xticklabels(categories, rotation=45)
     ax1.set_yticks(np.arange(len(categories))); ax1.set_yticklabels(categories)
 
-    threshold = 0.5 * matrix.max()
+    threshold = np.amax(0.5 * matrix)
     for i, j in itertools.product(range(matrix.shape[0]), range(matrix.shape[1])):
         color = 'white' if matrix[i, j] > threshold else 'black'
         ax1.text(j, i, matrix[i, j], horizontalalignment='center', color=color)

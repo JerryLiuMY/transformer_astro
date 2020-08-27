@@ -2,7 +2,6 @@ import os
 import re
 import numpy as np
 import tensorflow as tf
-from sklearn.metrics import confusion_matrix, classification_report
 from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorflow.keras.backend import clear_session
@@ -118,9 +117,7 @@ class _Base:
 
         y_evalu_spar = self.encoder.inverse_transform(y_evalu)
         y_predi_spar = self.encoder.inverse_transform(y_predi)
-        matrix = np.around(confusion_matrix(y_evalu_spar, y_predi_spar, labels=self.categories), decimals=2)
-        report = classification_report(y_evalu_spar, y_predi_spar, labels=self.categories, zero_division=0)
-        confusion_fig = plot_confusion(matrix, report, categories=self.categories)
+        confusion_fig = plot_confusion(y_evalu_spar, y_predi_spar, categories=self.categories)
         confusion_img = plot_to_image(confusion_fig)
 
         with tf.summary.create_file_writer(self.img_path).as_default():

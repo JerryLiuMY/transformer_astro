@@ -3,8 +3,7 @@ import tensorflow as tf
 from matplotlib import pyplot as plt
 from tqdm import tqdm_notebook
 from datetime import datetime
-from test.prediction import predict, get_model
-from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
+from tools.log_tools import plot_confusion
 
 
 def plot_timestep(y_evalu, y_predi_seq):
@@ -16,21 +15,24 @@ def plot_timestep(y_evalu, y_predi_seq):
         acc_seq = np.append(acc_seq, metric.result().numpy())
 
     # plot
-    fig, ax = plt.subplots(figsize=(12, 6))
+    timestep_fig, ax = plt.subplots(figsize=(12, 6))
     ax.plot(acc_seq)
     ax.set_xlabel('time step')
     ax.set_ylabel('test categorical accuracy')
 
-    return fig
+    return timestep_fig
 
 
 def evaluate(exp, y_evalu, y_predi_seq):
     y_evalu_spar = exp.encoder.inverse_transform(y_evalu)
     y_predi_spar = exp.encoder.inverse_transform(y_predi_seq[:, -1, :])
-    y_predi = y_predi_seq[:, -1, :]
+    confusion_fig = plot_confusion(y_evalu_spar, y_predi_spar, categories=exp.categories)
 
+    return confusion_fig
 
 # if __name__ == '__main__':
+#     from test.prediction import predict, get_model
+#     from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 #     hyper_param = {rnn_nums_hp: 2, rnn_dims_hp: 70, dnn_nums_hp: 2}
 #     exp = get_model('ASAS', 'sim', '10', hyper_param, 'last')
 #     y_evalu, y_predi_seq = predict(exp)
