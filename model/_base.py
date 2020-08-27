@@ -9,7 +9,7 @@ from tensorboard.plugins.hparams import api as hp
 from datetime import datetime
 from data.loader import data_loader, DataGenerator, one_hot_loader
 from data.loader import fold_loader, FoldGenerator
-from tools.log_tools import lnr_schedule, plot_confusion, plot_to_image
+from tools.log_tools import lnr_schedule, plot_confusion, fig_to_img
 from tools.exec_tools import create_dirs, create_paths, check_dataset_name
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config, strategy
@@ -118,7 +118,7 @@ class _Base:
         y_evalu_spar = self.encoder.inverse_transform(y_evalu)
         y_predi_spar = self.encoder.inverse_transform(y_predi)
         confusion_fig = plot_confusion(y_evalu_spar, y_predi_spar, categories=self.categories)
-        confusion_img = plot_to_image(confusion_fig)
+        confusion_img = fig_to_img(confusion_fig)
 
         with tf.summary.create_file_writer(self.img_path).as_default():
             tf.summary.image('Confusion Matrix', confusion_img, step=step)
@@ -138,7 +138,6 @@ class _FoldBase(_Base):
         self.dataset_valid = fold_loader(self.dataset_name, self.model_name, 'evalu', self.fold)
 
 
-# evaluation only on CPU environment & test set only last
 # tf.data pipeline -- processing
 # test data change
 

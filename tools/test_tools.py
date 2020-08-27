@@ -1,44 +1,16 @@
 import os
-import numpy as np
-import seaborn as sns
-import tensorflow as tf
 from datetime import datetime
-from model.lstm import SimpleLSTM
-from tensorflow.keras import Model
-from global_settings import LOG_FOLDER
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
-sns.set()
+from global_settings import LOG_FOLDER
+from model.lstm import SimpleLSTM
 
 
-def predict(exp):
-    model = Model(inputs=exp.model.inputs, outputs=exp.model.get_layer('softmax').output)
-    y_evalu = np.array([]).reshape(0, len(exp.categories))
-    for x_evalu_, y_evalu_ in exp.dataset_evalu.take(-1):
-        y_evalu = np.vstack([y_evalu, y_evalu_.numpy()])
-
-    with tf.device('/CPU:0'):
-        y_somax_seq = model.predict(exp.dataset_evalu)
-        y_predi_seq = np.zeros(shape=np.shape(y_somax_seq))
-        for t in range(np.shape(y_somax_seq)[1]):
-            max_arg = tf.math.argmax(y_somax_seq[:, t, :], axis=1)
-            y_predi = tf.one_hot(max_arg, depth=len(exp.categories)).numpy()
-            y_predi_seq[:, t, :] = y_predi
-
-    return y_evalu, y_predi_seq
-
-
-def get_model(dataset_name, model_name, exp_num, hyper_param, best_last):
+def get_exp(dataset_name, model_name, exp_num, hyper_param, best_last):
+    # input check
     print(f'{datetime.now()} Making prediction')
     assert best_last in ['best', 'last'], 'Invalid best_last type'
     exp_dir = os.path.join(LOG_FOLDER, f'{dataset_name}_{model_name}', f'experiment_{exp_num}')
-    mod_path = get_path(exp_dir, hyper_param, best_last)
-    exp = SimpleLSTM(dataset_name, model_name, hyper_param, exp_dir=exp_dir)
-    exp.model.load_weights(mod_path)
 
-    return exp
-
-
-def get_path(exp_dir, hyper_param, best_last):
     # get che_path
     che_dir, exp_name = os.path.join(exp_dir, 'checks'), None
     exp_names = [foo for foo in os.listdir(che_dir) if not foo.startswith('.')]
@@ -63,6 +35,10 @@ def get_path(exp_dir, hyper_param, best_last):
             bl_step, bl_vacc = (step, vacc) if vacc > bl_vacc else (bl_step, bl_vacc)
     mod_path = os.path.join(che_path, f'epoch_{bl_step}-val_acc_{bl_vacc}.hdf5')
 
-    return mod_path
+    # get model & experiment
+    exp = SimpleLSTM(dataset_name, model_name, hyper_param, exp_dir=exp_dir)
+    exp.exp_name = exp_name
+    exp.model.load_weights(mod_path)
 
+    return exp
 
