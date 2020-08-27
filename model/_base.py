@@ -141,7 +141,7 @@ class _FoldBase(_Base):
         self.dataset_valid = fold_loader(self.dataset_name, self.model_name, 'evalu', self.fold)
 
 
-# test set result -- test set only last
+# evaluation only on CPU environment & test set only last
 # tf.data pipeline -- processing
 # test data change
 

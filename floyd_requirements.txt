@@ -6,8 +6,9 @@ seaborn
 matplotlib
 # timesynth
 keras
-tensorflow
+tensorflow==2.3.0
 tensorboard
 scikit-learn==0.23.1
 imbalanced-learn
-
+pyyaml
+h5py

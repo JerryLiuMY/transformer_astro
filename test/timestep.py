@@ -2,9 +2,9 @@ import os
 import numpy as np
 import seaborn as sns
 import tensorflow as tf
+from tensorflow.keras import Model
 from tqdm import tqdm_notebook
 import matplotlib.pyplot as plt
-from tensorflow.keras import Model
 from model.lstm import SimpleLSTM
 from global_settings import LOG_FOLDER
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
@@ -15,7 +15,7 @@ def plot_timestep(dataset_name, model_name, exp_num, hyper_param, best_last):
     # get model
     assert best_last in ['best', 'last'], 'Invalid best_last type'
     exp_dir = os.path.join(LOG_FOLDER, f'{dataset_name}_{model_name}', f'experiment_{exp_num}')
-    mod_path = get_paths(exp_dir, hyper_param, best_last)
+    mod_path = get_path(exp_dir, hyper_param, best_last)
     with tf.device('/CPU:0'):
         exp = SimpleLSTM(dataset_name, model_name, hyper_param, exp_dir=exp_dir)
         exp.model.load_weights(mod_path)
@@ -40,7 +40,7 @@ def plot_timestep(dataset_name, model_name, exp_num, hyper_param, best_last):
     return fig
 
 
-def get_paths(exp_dir, hyper_param, best_last):
+def get_path(exp_dir, hyper_param, best_last):
     # get che_path
     che_dir, exp_name = os.path.join(exp_dir, 'checks'), None
     exp_names = [foo for foo in os.listdir(che_dir) if not foo.startswith('.')]
@@ -63,8 +63,10 @@ def get_paths(exp_dir, hyper_param, best_last):
             bl_step, bl_vacc = (step, vacc) if step > bl_step else (bl_step, bl_vacc)
         else:
             bl_step, bl_vacc = (step, vacc) if vacc > bl_vacc else (bl_step, bl_vacc)
-    mod_name = f'epoch_{bl_step}-val_acc_{bl_vacc}.hdf5'
-    mod_path = os.path.join(che_path, mod_name)
+    mod_path = os.path.join(che_path, f'epoch_{bl_step}-val_acc_{bl_vacc}.hdf5')
 
     return mod_path
 
+
+if __name__ == '__main__':
+    plot_timestep('ASAS', 'sim', '10', {rnn_nums_hp: 2, rnn_dims_hp: 70, dnn_nums_hp: 2}, 'last')
