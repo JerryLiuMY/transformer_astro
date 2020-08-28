@@ -3,12 +3,23 @@ import time
 
 
 # data tools
-def one_hot_msg(func):
+def encoder_msg(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         value = func(*args, **kwargs)
         print(f'Successfully loaded one-hot encoder')
+        return value
+
+    return wrapper
+
+
+def token_msg(func):
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        value = func(*args, **kwargs)
+        print(f'Successfully loaded tokenizer')
         return value
 
     return wrapper
