@@ -21,37 +21,43 @@ ws = data_config['ws']
 kfold = evalu_config['kfold']
 
 
-def load_catalog(dataset_name, set_type):
+def load_sliding(dataset_name, set_type):
+    window_stride = f'{window[dataset_name]}_{stride[dataset_name]}'
+    cats = list(pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl')).categories_[0])
     catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
+    sliding = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, f'{window_stride}.csv'), index_col=0)
     whole_catalog, unbal_catalog = pd.DataFrame(), pd.DataFrame()
     valid_catalog, evalu_catalog = pd.DataFrame(), pd.DataFrame()
-    encoder = pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'))
-    cats = list(encoder.categories_[0])
 
     for cat in cats:
-        catalog_ = catalog[catalog['Class'] == cat].reset_index(drop=True, inplace=False)
-        catalog_ = sklearn.utils.shuffle(catalog_, random_state=0); size_ = np.shape(catalog_)[0]
-        whole_catalog = pd.concat([whole_catalog, catalog_])
-        unbal_catalog = pd.concat([unbal_catalog, catalog_.iloc[:int(size_ * 0.7), :]])
-        valid_catalog = pd.concat([valid_catalog, catalog_.iloc[int(size_ * 0.7): int(size_ * 0.8), :]])
-        evalu_catalog = pd.concat([evalu_catalog, catalog_.iloc[int(size_ * 0.8):, :]])
+        catalog_raw_ = sklearn.utils.shuffle(catalog[catalog['Class'] == cat], random_state=0)
+        len_ = np.shape(catalog_raw_)[0]
+        whole_catalog = pd.concat([whole_catalog, catalog_raw_])
+        unbal_catalog = pd.concat([unbal_catalog, catalog_raw_.iloc[:int(len_ * 0.7), :]])
+        valid_catalog = pd.concat([valid_catalog, catalog_raw_.iloc[int(len_ * 0.7): int(len_ * 0.8), :]])
+        evalu_catalog = pd.concat([evalu_catalog, catalog_raw_.iloc[int(len_ * 0.8):, :]])
+
+    whole_sliding = sliding.loc[sliding['Path'].isin(whole_catalog['Path'])]
+    unbal_sliding = sliding.loc[sliding['Path'].isin(unbal_catalog['Path'])]
+    valid_sliding = sliding.loc[sliding['Path'].isin(valid_catalog['Path'])]
+    evalu_sliding = sliding.loc[sliding['Path'].isin(evalu_catalog['Path'])]
 
     ros = RandomOverSampler(sampling_strategy='auto', random_state=1)
     rus = RandomUnderSampler(sampling_strategy={cat: sample[dataset_name] for cat in cats}, random_state=1)
-    unbal_catalog, _ = ros.fit_resample(unbal_catalog, unbal_catalog['Class'])
-    train_catalog, _ = rus.fit_resample(unbal_catalog, unbal_catalog['Class'])
+    unbal_sliding, _ = ros.fit_resample(unbal_sliding, unbal_sliding['Class'])
+    train_catalog, _ = rus.fit_resample(unbal_sliding, unbal_sliding['Class'])
 
-    catalog_dict = {'whole': whole_catalog.reset_index(drop=True),
-                    'train': train_catalog.reset_index(drop=True),
-                    'valid': valid_catalog.reset_index(drop=True),
-                    'evalu': evalu_catalog.reset_index(drop=True)}
+    sliding_dict = {'whole': whole_sliding.reset_index(drop=True),  # ordered
+                    'train': train_catalog.reset_index(drop=True),  # shuffled
+                    'valid': valid_sliding.reset_index(drop=True),  # ordered
+                    'evalu': evalu_sliding.reset_index(drop=True)}  # ordered
 
-    return catalog_dict[set_type]
+    return sliding_dict[set_type]
 
 
 def load_fold(dataset_name, set_type, fold):
     skf = StratifiedKFold(n_splits=kfold, shuffle=True, random_state=0)
-    catalog = load_catalog(dataset_name, 'whole')
+    catalog = load_sliding(dataset_name, 'whole')
     y_spar = catalog['Class'].values.reshape(-1, 1)
 
     fold_dict = {}; fold_idx = 0
@@ -65,9 +71,9 @@ def load_fold(dataset_name, set_type, fold):
     return fold_dict[fold][set_type]
 
 
-def load_xy(dataset_name, set_type, catalog):
+def load_xy(dataset_name, set_type, sliding):
     num_process = 8
-    pool, catalogs = multiprocessing.Pool(num_process), np.array_split(catalog, num_process)
+    pool, catalogs = multiprocessing.Pool(num_process), np.array_split(sliding, num_process)
 
     x, y_spar, drop_count = [], [], 0
     for result in tqdm(pool.imap(functools.partial(load_xy_nest, dataset_name, set_type), catalogs)):
@@ -85,35 +91,24 @@ def load_xy(dataset_name, set_type, catalog):
     return x, y_spar
 
 
-def load_xy_nest(dataset_name, set_type, catalog_):
-    cats_, paths_ = list(catalog_['Class']), list(catalog_['Path'])
+def load_xy_nest(dataset_name, set_type, sliding_):
+    cats_, paths_ = list(sliding_['Class']), list(sliding_['Path'])
     x_, y_spar_, drop_count_ = [], [], 0
     for cat_, path_ in tqdm(list(zip(cats_, paths_))):
         data_df_ = pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, path_))
 
-        if (set_type != 'evalu') and (np.shape(data_df_)[0] >= window[dataset_name]):
-            x__, y_spar__ = _processing(dataset_name, cat_, data_df_)
-            [x_.append(foo) for foo in x__]
-            [y_spar_.append(bar) for bar in y_spar__]
+        if (set_type in ['train', 'valid']) and (np.shape(data_df_)[0] >= window[dataset_name]):
+            dtdm_org = _load_dtdm(data_df_)
+            dtdm_bin = _proc_dtdm(dataset_name, dtdm_org[start: end, :])
         elif set_type == 'evalu':
-            (w, s) = ws[dataset_name]
-            x_.append(_proc_dtdm(_load_dtdm(data_df_), w, s))
+            dtdm_org = _load_dtdm(data_df_)
+            dtdm_bin = _proc_dtdm(dataset_name, dtdm_org)
+            x_.append(dtdm_bin)
             y_spar_.append([cat_])
         else:
             drop_count_ += 1
 
     return x_, y_spar_, drop_count_
-
-
-def _processing(dataset_name, cat, data_df):
-    dtdm_org, (w, s) = _load_dtdm(data_df), ws[dataset_name]
-    x_, y_spar_ = np.array([]).reshape([0, (window[dataset_name]-w)//s + 1, 2 * w]), np.array([]).reshape([0, 1])
-    for i in range(0, np.shape(dtdm_org)[0] - (window[dataset_name] - 1), stride[dataset_name]):
-        dtdm_bin_ = _proc_dtdm(dtdm_org[i: i + window[dataset_name], :], w, s)
-        dtdm_bin_, cat_ = np.expand_dims(dtdm_bin_, axis=0), np.expand_dims([cat], axis=0)
-        x_, y_spar_ = np.vstack([x_, dtdm_bin_]), np.vstack([y_spar_, cat_])
-
-    return x_, y_spar_
 
 
 def _load_dtdm(data_df):
@@ -127,7 +122,8 @@ def _load_dtdm(data_df):
     return dtdm_org
 
 
-def _proc_dtdm(dtdm_org, w, s):
+def _proc_dtdm(dataset_name, dtdm_org):
+    (w, s) = ws[dataset_name]
     dtdm_bin = np.array([]).reshape(0, 2 * w)
     for i in range(0, np.shape(dtdm_org)[0] - (w - 1), s):
         dtdm_bin = np.vstack([dtdm_bin, dtdm_org[i: i + w, :].reshape(1, -1)])
@@ -136,13 +132,13 @@ def _proc_dtdm(dtdm_org, w, s):
 
 
 def save_one_hot(dataset_name):
-    catalog, cats = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0), []
-    for cat in sorted(set(catalog['Class'])):
-        if len(catalog[catalog['Class'] == cat]) >= thresh[dataset_name]:
+    sliding, cats = load_sliding(dataset_name, 'whole'), []
+    for cat in sorted(set(sliding['Class'])):
+        if len(sliding[sliding['Class'] == cat]) >= thresh[dataset_name]:
             cats.append(cat)
-    catalog = catalog[catalog['Class'].isin(cats)].reset_index(drop=True, inplace=False)
+    sliding = sliding[sliding['Class'].isin(cats)].reset_index(drop=True, inplace=False)
 
-    y_spar = np.array(sorted(list(catalog['Class']))).reshape(-1, 1)
+    y_spar = np.array(sorted(list(sliding['Class']))).reshape(-1, 1)
     encoder = OneHotEncoder(handle_unknown='ignore', dtype=np.float32)
     encoder.fit(y_spar)
 

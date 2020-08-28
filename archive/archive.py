@@ -6,10 +6,10 @@ import pickle
 from tqdm import tqdm_notebook
 from global_settings import DATA_FOLDER
 from sklearn.preprocessing import MinMaxScaler
-from tools.data_tools import load_catalog
 
 
 def std(dataset_name='OGLE'):
+    """Check the number of columns in OGLE dataset"""
     catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'))
     base = os.path.join(DATA_FOLDER, dataset_name, 'LCs')
     cats, paths, count = list(catalog['Class']), list(catalog['Path']), 0
@@ -20,6 +20,7 @@ def std(dataset_name='OGLE'):
 
 
 def duplicate(dataset_name='OGLE'):
+    """Check mjd duplicate in dataset"""
     catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'))
     base = os.path.join(DATA_FOLDER, dataset_name, 'LCs')
     paths, dupli = list(catalog['Path']), 0
@@ -31,7 +32,8 @@ def duplicate(dataset_name='OGLE'):
 
 
 def scaler_saver(dataset_name, feature_range=(0, 30)):
-    catalog = load_catalog(dataset_name, 'whole')
+    """Global min-max scalar """
+    catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
     cats, paths = list(catalog['Class']), list(catalog['Path'])
     mag_full = np.array([])
     for cat, path in tqdm(list(zip(cats, paths))):

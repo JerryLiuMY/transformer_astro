@@ -1,13 +1,11 @@
 import math
-
 import numpy as np
 import pandas as pd
 import sklearn
 from sklearn.utils import class_weight
-from tensorflow.python.keras.utils.data_utils import Sequence
-
 from data.loader import one_hot_loader, batch
-from tools.data_tools import load_xy, load_catalog, load_fold
+from tensorflow.python.keras.utils.data_utils import Sequence
+from tools.data_tools import load_xy, load_sliding, load_fold
 
 
 class BaseGenerator(Sequence):
@@ -42,7 +40,7 @@ class BaseGenerator(Sequence):
 class DataGenerator(BaseGenerator):
     def __init__(self, dataset_name, model_name):
         super().__init__(dataset_name, model_name)
-        self.catalog = load_catalog(self.dataset_name, 'train')
+        self.catalog = load_sliding(self.dataset_name, 'train')
 
 
 class FoldGenerator(BaseGenerator):

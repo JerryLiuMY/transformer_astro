@@ -1,7 +1,6 @@
 import matplotlib.gridspec as gridspec
-from tools.data_tools import load_catalog
-import matplotlib.pyplot as plt
 from global_settings import DATA_FOLDER
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -15,7 +14,7 @@ plt.rc('ytick', labelsize=13)
 
 
 def distribution(dataset_name):
-    catalog = load_catalog(dataset_name, 'whole')
+    catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
     fig = plt.figure(figsize=(16, 9)); gs = gridspec.GridSpec(3, 2)
     ax1 = plt.subplot(gs[0:2, 0]); ax3 = plt.subplot(gs[2, :])
     ax2 = plt.subplot(gs[0:2, 1]); ax2_ = ax2.twinx(); ax2_.set_yticks([])
@@ -31,7 +30,7 @@ def distribution(dataset_name):
 
 
 def minmax(dataset_name):
-    catalog = load_catalog(dataset_name, 'whole')
+    catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
     cats, paths = list(catalog['Class']), list(catalog['Path'])
     uniq_cats = sorted(list(set(cats))); N = len(uniq_cats)
 
