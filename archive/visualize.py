@@ -1,5 +1,5 @@
 import matplotlib.gridspec as gridspec
-from global_settings import DATA_FOLDER
+from global_settings import RAW_FOLDER
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -14,7 +14,7 @@ plt.rc('ytick', labelsize=13)
 
 
 def distribution(dataset_name):
-    catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
+    catalog = pd.read_csv(os.path.join(RAW_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
     fig = plt.figure(figsize=(16, 9)); gs = gridspec.GridSpec(3, 2)
     ax1 = plt.subplot(gs[0:2, 0]); ax3 = plt.subplot(gs[2, :])
     ax2 = plt.subplot(gs[0:2, 1]); ax2_ = ax2.twinx(); ax2_.set_yticks([])
@@ -30,7 +30,7 @@ def distribution(dataset_name):
 
 
 def minmax(dataset_name):
-    catalog = pd.read_csv(os.path.join(DATA_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
+    catalog = pd.read_csv(os.path.join(RAW_FOLDER, dataset_name, 'catalog.csv'), index_col=0)
     cats, paths = list(catalog['Class']), list(catalog['Path'])
     uniq_cats = sorted(list(set(cats))); N = len(uniq_cats)
 
@@ -40,7 +40,7 @@ def minmax(dataset_name):
         cats_, paths_ = [cats[i] for i in indices], [paths[i] for i in indices]
         min_mag_, max_mag_ = [], []
         for cat_, path_ in list(zip(cats_, paths_)):
-            data_df = pd.read_csv(os.path.join(DATA_FOLDER, 'ASAS', path_))
+            data_df = pd.read_csv(os.path.join(RAW_FOLDER, 'ASAS', path_))
             min_mag_.append(min(list(data_df['mag']))); max_mag_.append(max(list(data_df['mag'])))
         min_mag.append(round(min(min_mag_), 2)), max_mag.append(round(max(max_mag_), 2))
 
