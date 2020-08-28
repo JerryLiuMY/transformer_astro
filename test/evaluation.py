@@ -1,10 +1,10 @@
 import os
+import json
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.keras import Model
 from tools.log_tools import plot_confusion
 from tools.dir_tools import create_dirs
-import json
 
 
 def evaluate(exp):
@@ -36,18 +36,17 @@ def evaluate(exp):
 
 
 def predict(exp):
-    model = Model(inputs=exp.model.inputs, outputs=exp.model.get_layer('softmax').output)
-    y_evalu = np.array([]).reshape(0, len(exp.categories))
-    for x_evalu_, y_evalu_ in exp.dataset_evalu.take(-1):
-        y_evalu = np.vstack([y_evalu, y_evalu_.numpy()])
-
     with tf.device('/CPU:0'):
+        model = Model(inputs=exp.model.inputs, outputs=exp.model.get_layer('softmax').output)
+        y_evalu = np.array([]).reshape(0, len(exp.categories))
+        for x_evalu_, y_evalu_ in exp.dataset_evalu.take(-1):
+            y_evalu = np.vstack([y_evalu, y_evalu_.numpy()])
         y_somax_seq = model.predict(exp.dataset_evalu)
         y_predi_seq = np.zeros(shape=np.shape(y_somax_seq))
+
         for t in range(np.shape(y_somax_seq)[1]):
             max_arg = tf.math.argmax(y_somax_seq[:, t, :], axis=1)
             y_predi = tf.one_hot(max_arg, depth=len(exp.categories)).numpy()
             y_predi_seq[:, t, :] = y_predi
 
     return y_evalu, y_predi_seq
-
