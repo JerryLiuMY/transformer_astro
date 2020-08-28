@@ -13,8 +13,8 @@ use_gen, ws = train_config['use_gen'], data_config['ws']
 
 class SimpleLSTM(_Base):
 
-    def __init__(self, dataset_name, model_name, hyper_param, exp_dir):
-        super().__init__(dataset_name, model_name, hyper_param, exp_dir)
+    def __init__(self, dataset_name, hyper_param, exp_dir):
+        super().__init__(dataset_name, hyper_param, exp_dir)
 
     def _build(self):
         # WARNING: Masking is only supported in the CPU environment (not supported for CuDNN RNNs)
@@ -45,5 +45,5 @@ class SimpleLSTM(_Base):
 
 class FoldSimpleLSTM(SimpleLSTM, _FoldBase):
 
-    def __init__(self, dataset_name, model_name, hyper_param, exp_dir, fold):
-        _FoldBase.__init__(self, dataset_name, model_name, hyper_param, exp_dir, fold)
+    def __init__(self, dataset_name, hyper_param, exp_dir, fold):
+        _FoldBase.__init__(self, dataset_name, hyper_param, exp_dir, fold)
