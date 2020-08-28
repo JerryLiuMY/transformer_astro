@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from shutil import copyfile
-from global_settings import SYNTHESIS_FOLDER, DATA_FOLDER
+from global_settings import SYNTH_FOLDER, RAW_FOLDER
 from config._synth_config import dataset_dict, population
 
 
@@ -16,7 +16,7 @@ def generate_synth(cats):
     catalog.to_csv(os.path.join(synth_dir, 'catalog.csv'))
 
     for old, new in list(zip(catalog['Old_Path'], catalog['Path'])):
-        copyfile(os.path.join(SYNTHESIS_FOLDER, old), os.path.join(synth_dir, new))
+        copyfile(os.path.join(SYNTH_FOLDER, old), os.path.join(synth_dir, new))
 
 
 def build_catalog(catalog, cat):
@@ -38,12 +38,12 @@ def build_catalog(catalog, cat):
 
 def new_synth_dir():
     synth_now = 0
-    for _ in next(os.walk(DATA_FOLDER))[1]:
+    for _ in next(os.walk(RAW_FOLDER))[1]:
         if len(_.split('_')) == 2 and _.split('_')[0] == 'SYNTHESIS':
             synth_now_ = int(_.split('_')[1])
             synth_now = synth_now_ if synth_now_ > synth_now else synth_now
 
-    synth_dir = os.path.join(DATA_FOLDER, '_'.join(['SYNTHESIS', str(synth_now + 1)]))
+    synth_dir = os.path.join(RAW_FOLDER, '_'.join(['SYNTHESIS', str(synth_now + 1)]))
     os.mkdir(synth_dir)
     os.mkdir(os.path.join(synth_dir, 'LCs'))
 

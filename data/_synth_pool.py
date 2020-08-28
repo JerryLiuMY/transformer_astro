@@ -1,4 +1,4 @@
-from global_settings import SYNTHESIS_FOLDER
+from global_settings import SYNTH_FOLDER
 import os
 import itertools
 from data._synth import sin_series, gp_series, car_series
@@ -13,7 +13,7 @@ def run_synth(cat, **kwargs):
     :param kwargs: (str, float) parameters of the time series
     """
     assert cat in ["sin", "gp", "car"]
-    set_dir = os.path.join(SYNTHESIS_FOLDER, cat)
+    set_dir = os.path.join(SYNTH_FOLDER, cat)
     if not os.path.isdir(set_dir): os.mkdir(set_dir)
     series_func, base_config = series_funcs[cat], pool_dict[cat]
 
