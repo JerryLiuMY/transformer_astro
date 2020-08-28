@@ -7,8 +7,9 @@ from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorflow.keras.backend import clear_session
 from tensorboard.plugins.hparams import api as hp
 from datetime import datetime
-from data.loader import data_loader, DataGenerator, one_hot_loader
-from data.loader import fold_loader, FoldGenerator
+from data.loader import data_loader, one_hot_loader
+from data.generator import DataGenerator, FoldGenerator
+from data.loader import fold_loader
 from tools.log_tools import lnr_schedule, plot_confusion, fig_to_img
 from tools.dir_tools import create_dirs
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
