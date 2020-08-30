@@ -7,8 +7,8 @@ from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorflow.keras.backend import clear_session
 from tensorboard.plugins.hparams import api as hp
 from datetime import datetime
-from data.loader import data_loader, one_hot_loader
-from data.generator import DataGenerator, FoldGenerator
+from data.loader import data_loader, encoder_loader
+from data._generator import DataGenerator, FoldGenerator
 from data.loader import fold_loader
 from tools.log_tools import lnr_schedule, plot_confusion, fig_to_img
 from tools.dir_tools import create_dirs
@@ -32,10 +32,9 @@ def log_params(exp_dir):
 
 class _Base:
 
-    def __init__(self, dataset_name, model_name, hyper_param, exp_dir):
+    def __init__(self, dataset_name, hyper_param, exp_dir):
         clear_session()
         self.dataset_name = dataset_name
-        self.model_name = model_name
         self.hyper_param = hyper_param
         self.exp_dir = exp_dir
         self._load_name()
@@ -71,17 +70,16 @@ class _Base:
         self.che_path = os.path.join(self.che_dir, self.exp_name)
 
     def _load_enco(self):
-        encoder = one_hot_loader(self.dataset_name, self.model_name)
+        encoder = encoder_loader(self.dataset_name)
         self.encoder = encoder
         self.categories = encoder.categories_[0]
 
     def _load_data(self):
         if not use_gen:
-            self.dataset_train = data_loader(self.dataset_name, self.model_name, 'train')
+            self.dataset_train = data_loader(self.dataset_name, 'train')
         else:
-            self.dataset_train = DataGenerator(self.dataset_name, self.model_name)
-        self.dataset_valid = data_loader(self.dataset_name, self.model_name, 'valid')
-        self.dataset_evalu = data_loader(self.dataset_name, self.model_name, 'evalu')
+            self.dataset_train = DataGenerator(self.dataset_name)
+        self.dataset_valid = data_loader(self.dataset_name, 'valid')
 
     def _build(self):
         model = None
@@ -126,20 +124,18 @@ class _Base:
 
 class _FoldBase(_Base):
 
-    def __init__(self, dataset_name, model_name, hyper_param, exp_dir, fold):
+    def __init__(self, dataset_name, hyper_param, exp_dir, fold):
         self.fold = fold
-        super().__init__(dataset_name, model_name, hyper_param, exp_dir)
+        super().__init__(dataset_name, hyper_param, exp_dir)
 
     def _load_data(self):
         if not use_gen:
-            self.dataset_train = fold_loader(self.dataset_name, self.model_name, 'train', self.fold)
+            self.dataset_train = fold_loader(self.dataset_name, 'train', self.fold)
         else:
-            self.dataset_train = FoldGenerator(self.dataset_name, self.model_name, self.fold)
-        self.dataset_valid = fold_loader(self.dataset_name, self.model_name, 'evalu', self.fold)
-
+            self.dataset_train = FoldGenerator(self.dataset_name, self.fold)
+        self.dataset_valid = fold_loader(self.dataset_name, 'evalu', self.fold)
 
 # tf.data pipeline -- processing
-# test data change
 
 # transformer model
 # wait: TPU compatibility

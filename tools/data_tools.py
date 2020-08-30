@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import sklearn
+import warnings
 from sklearn.model_selection import StratifiedKFold
 from global_settings import RAW_FOLDER
 from config.data_config import data_config
@@ -9,6 +10,7 @@ from config.exec_config import evalu_config
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
 
+warnings.simplefilter(action='ignore', category=FutureWarning)
 thresh, sample = data_config['thresh'], data_config['sample']
 window, stride = data_config['window'], data_config['stride']
 ws = data_config['ws']

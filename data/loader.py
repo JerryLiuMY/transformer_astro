@@ -1,32 +1,36 @@
 import os
 import pickle
 import numpy as np
-import pandas as pd
 import tensorflow as tf
+from datetime import datetime
 from global_settings import DATA_FOLDER
 from sklearn.utils import class_weight
 from config.exec_config import train_config
-from datetime import datetime
-from tools.data_tools import load_sliding, load_fold
-from tools.data_tools import load_xy
-from tools.misc import one_hot_msg, data_msg
-
+from data.core import load_xy
+from tools.data_tools import load_fold
+from tools.utils import encoder_msg, token_msg, data_msg
 batch = train_config['batch']
 
 
-@one_hot_msg
-def one_hot_loader(dataset_name, model_name):
-    dataset_folder = '_'.join([dataset_name, model_name])
-    with open(os.path.join(DATA_FOLDER, dataset_folder, 'encoder.pkl'), 'rb') as handle:
+@encoder_msg
+def encoder_loader(dataset_name):
+    with open(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'), 'rb') as handle:
         encoder = pickle.load(handle)
 
     return encoder
 
 
+@token_msg
+def token_loader(dataset_name):
+    with open(os.path.join(DATA_FOLDER, dataset_name, 'token.pkl'), 'rb') as handle:
+        token = pickle.load(handle)
+
+    return token
+
+
 @data_msg
-def data_loader(dataset_name, model_name, set_type):
-    dataset_folder = '_'.join([dataset_name, model_name])
-    with open(os.path.join(DATA_FOLDER, dataset_folder, set_type + '.pkl'), 'rb') as handle:
+def data_loader(dataset_name, set_type):
+    with open(os.path.join(DATA_FOLDER, dataset_name, set_type + '.pkl'), 'rb') as handle:
         x, y = pickle.load(handle)
 
     if set_type == 'train':
@@ -40,32 +44,12 @@ def data_loader(dataset_name, model_name, set_type):
     return dataset
 
 
-def one_hot_saver(dataset_name, model_name):
-    encoder = pd.read_pickle(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'))
-    dataset_folder = '_'.join([dataset_name, model_name])
-    with open(os.path.join(DATA_FOLDER, dataset_folder, 'encoder.pkl'), 'wb') as handle:
-        pickle.dump(encoder, handle)
-
-
-def data_saver(dataset_name, model_name, set_type):
-    print(f'{datetime.now()} Loading {dataset_name} {set_type} set')
-    catalog = load_sliding(dataset_name, set_type)
-    encoder = one_hot_loader(dataset_name, model_name)
-    x, y_spar = load_xy(dataset_name, set_type, catalog)
-    y = encoder.transform(y_spar).toarray().astype(np.float32)
-    x, y = x.astype(np.float32), y.astype(np.float32)
-
-    dataset_folder = '_'.join([dataset_name, model_name])
-    with open(os.path.join(DATA_FOLDER, dataset_folder, set_type + '.pkl'), 'wb') as handle:
-        pickle.dump((x, y), handle, protocol=4)
-
-
-def fold_loader(dataset_name, model_name, set_type, fold):
+def fold_loader(dataset_name, set_type, fold):
     print(f'{datetime.now()} Loading {dataset_name} {set_type} set fold {fold}')
 
-    catalog = load_fold(dataset_name, set_type, fold)
-    encoder = one_hot_loader(dataset_name, model_name)
-    x, y_spar = load_xy(dataset_name, set_type, catalog)
+    sliding = load_fold(dataset_name, set_type, fold)
+    encoder = encoder_loader(dataset_name)
+    x, y_spar = load_xy(dataset_name, sliding)
     y = encoder.transform(y_spar).toarray().astype(np.float32)
     x, y = x.astype(np.float32), y.astype(np.float32)
 
