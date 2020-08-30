@@ -37,7 +37,6 @@ def load_xy_nest(dataset_name, sliding_):
         if index % 1000 == 0:
             print(f'{datetime.now()} Finished {index} / {len(sliding_)}')
 
-        (w, s) = ws[dataset_name]
         pth, cat = list(sliding_['Path'])[index], list(sliding_['Class'])[index]
         sta, end = list(sliding_['Start'])[index], list(sliding_['End'])[index]
         data_df = pd.read_pickle(os.path.join(RAW_FOLDER, dataset_name, pth))

@@ -7,7 +7,11 @@
 # from tqdm import tqdm_notebook
 # from tensorflow.python.keras.preprocessing.sequence import pad_sequences
 # from global_settings import RAW_FOLDER, DATA_FOLDER
-# from data.core import _load_dtdm, _proc_dtdm
+# from data.core import load_dtdm, proc_dtdm
+# from config.data_config import data_config
+#
+# window, stride = data_config['window'], data_config['stride']
+# ws = data_config['ws']
 #
 #
 # def data_saver(dataset_name, set_type='analy'):
@@ -24,12 +28,13 @@
 #
 # def load_xy(dataset_name, catalog):
 #     x, y_spar = [], []
-#     for i in tqdm_notebook(range(len(catalog))):
-#         pth, cat = list(catalog['Path'])[i], list(catalog['Class'])[i]
+#     for index in tqdm_notebook(range(len(catalog))):
+#         pth, cat = list(catalog['Path'])[index], list(catalog['Class'])[index]
 #         data_df = pd.read_pickle(os.path.join(RAW_FOLDER, dataset_name, pth))
 #
-#         dtdm_org = _load_dtdm(data_df)
-#         dtdm_bin = _proc_dtdm(dataset_name, dtdm_org)
+#         (w, s) = ws[dataset_name]
+#         dtdm_org = load_dtdm(data_df, 0, len(data_df))
+#         dtdm_bin = proc_dtdm(dtdm_org, w, s)
 #         x.append(dtdm_bin)
 #         y_spar.append(np.array([cat]))
 #

@@ -4,10 +4,12 @@ import pandas as pd
 import sklearn
 import tensorflow as tf
 from sklearn.utils import class_weight
-from data.loader import encoder_loader, batch
+from data.loader import encoder_loader
+from config.exec_config import train_config
 from tensorflow.python.keras.utils.data_utils import Sequence
 from tools.data_tools import load_sliding, load_fold
 from data.core import load_xy
+batch = train_config['batch']
 
 
 class BaseGenerator(Sequence):
@@ -34,7 +36,7 @@ class BaseGenerator(Sequence):
         y = self.encoder.transform(y_spar).toarray()
         x, y = x.astype(np.float32), y.astype(np.float32)
         sample_weight = np.float32(class_weight.compute_sample_weight('balanced', y))
-        dataset = tf.data.Dataset.from_tensor_slices((x, y, sample_weight))
+        dataset = tf.data.Dataset.from_tensor_slices((x, y, sample_weight)).batch(batch)
 
         return dataset
 
