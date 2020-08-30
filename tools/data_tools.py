@@ -29,8 +29,13 @@ def load_catalog(dataset_name, set_type):
         valid_catalog = pd.concat([valid_catalog, catalog_raw_.iloc[int(len_ * 0.7): int(len_ * 0.8), :]])
         analy_catalog = pd.concat([analy_catalog, catalog_raw_.iloc[int(len_ * 0.8):, :]])
 
+    ros = RandomOverSampler(sampling_strategy='auto', random_state=1)
+    rus = RandomUnderSampler(sampling_strategy={cat: sample[dataset_name] for cat in cats}, random_state=1)
+    unbal_catalog, _ = ros.fit_resample(unbal_catalog, unbal_catalog['Class'])
+    train_catalog, _ = rus.fit_resample(unbal_catalog, unbal_catalog['Class'])
+
     catalog_dict = {'whole': whole_catalog.reset_index(drop=True),  # ordered
-                    'unbal': unbal_catalog.reset_index(drop=True),  # ordered
+                    'train': train_catalog.reset_index(drop=True),  # ordered
                     'valid': valid_catalog.reset_index(drop=True),  # ordered
                     'analy': analy_catalog.reset_index(drop=True)}  # ordered
 
@@ -40,22 +45,17 @@ def load_catalog(dataset_name, set_type):
 def load_sliding(dataset_name, set_type):
     window_stride = f'{window[dataset_name]}_{stride[dataset_name]}'
     sliding = pd.read_csv(os.path.join(RAW_FOLDER, dataset_name, f'{window_stride}.csv'), index_col=0)
-    cats = list(pd.read_pickle(os.path.join(RAW_FOLDER, dataset_name, 'encoder.pkl')).categories_[0])
-    whole_catalog, unbal_catalog = load_catalog(dataset_name, 'whole'), load_catalog(dataset_name, 'unbal')
+    whole_catalog, train_catalog = load_catalog(dataset_name, 'whole'), load_catalog(dataset_name, 'train')
     valid_catalog, evalu_catalog = load_catalog(dataset_name, 'valid'), load_catalog(dataset_name, 'analy')
 
-    whole_sliding = sliding.loc[sliding['Path'].isin(whole_catalog['Path'])]
-    unbal_sliding = sliding.loc[sliding['Path'].isin(unbal_catalog['Path'])]
-    valid_sliding = sliding.loc[sliding['Path'].isin(valid_catalog['Path'])]
-    evalu_sliding = sliding.loc[sliding['Path'].isin(evalu_catalog['Path'])]
-
-    ros = RandomOverSampler(sampling_strategy='auto', random_state=1)
-    rus = RandomUnderSampler(sampling_strategy={cat: sample[dataset_name] for cat in cats}, random_state=1)
-    unbal_sliding, _ = ros.fit_resample(unbal_sliding, unbal_sliding['Class'])
-    train_catalog, _ = rus.fit_resample(unbal_sliding, unbal_sliding['Class'])
+    # sliding: paths excluding short sequence; catalog:
+    whole_sliding = whole_catalog.merge(sliding, how='inner', on=['Path', 'Class', 'N'])
+    train_sliding = train_catalog.merge(sliding, how='inner', on=['Path', 'Class', 'N'])
+    valid_sliding = valid_catalog.merge(sliding, how='inner', on=['Path', 'Class', 'N'])
+    evalu_sliding = evalu_catalog.merge(sliding, how='inner', on=['Path', 'Class', 'N'])
 
     sliding_dict = {'whole': whole_sliding.reset_index(drop=True),  # ordered
-                    'train': train_catalog.reset_index(drop=True),  # shuffled
+                    'train': train_sliding.reset_index(drop=True),  # shuffled
                     'valid': valid_sliding.reset_index(drop=True),  # ordered
                     'evalu': evalu_sliding.reset_index(drop=True)}  # ordered
 

@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from data.process import load_xy
+from data.core import load_xy
 from tools.data_tools import load_sliding
 from global_settings import RAW_FOLDER, DATA_FOLDER
 

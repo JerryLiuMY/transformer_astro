@@ -16,10 +16,10 @@ def load_xy(dataset_name, sliding):
     (w, s) = ws[dataset_name]; steps = (window[dataset_name] - w) // s + 1
     x, y_spar = np.array([]).reshape([0, steps, 2 * w]), np.array([]).reshape([0, 1])
 
-    pool, slidings = multiprocessing.Pool(num_process), np.array_split(sliding, num_process)
     load_xy_nest_ = functools.partial(load_xy_nest, dataset_name)
-    for results_ in tqdm_notebook(pool.imap(load_xy_nest_, slidings), total=num_process):
-        x, y_spar = np.vstack([x, results_[0]]), np.vstack([y_spar, results_[1]])
+    pool, slidings = multiprocessing.Pool(num_process), np.array_split(sliding, num_process)
+    for result_ in tqdm_notebook(pool.imap(load_xy_nest_, slidings), total=num_process):
+        x, y_spar = np.vstack([x, result_[0]]), np.vstack([y_spar, result_[1]])
     pool.close()
     pool.join()
 

@@ -1,9 +1,10 @@
-from datetime import datetime
 import numpy as np
 import seaborn as sns
 import tensorflow as tf
 from matplotlib import pyplot as plt
 from test.evaluation import predict
+from tools.data_tools import load_catalog, load_sliding
+from datetime import datetime
 
 
 def plot_timesteps(exp):
@@ -24,3 +25,12 @@ def plot_timesteps(exp):
         plt.show()
 
     return timesteps_fig
+
+
+def count_drop(dataset_name, set_type):
+    if set_type == 'evalu':
+        catalog_len = len(set(load_catalog(dataset_name, 'analy')['Path']))
+    else:
+        catalog_len = len(set(load_catalog(dataset_name, set_type)['Path']))
+    sliding_len = len(set(load_sliding(dataset_name, set_type)['Path']))
+    print(f'{dataset_name} {set_type} set: {catalog_len - sliding_len} lightcurves dropped out of {catalog_len}')
