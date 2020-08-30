@@ -8,7 +8,7 @@ from tensorflow.keras.backend import clear_session
 from tensorboard.plugins.hparams import api as hp
 from datetime import datetime
 from data.loader import data_loader, encoder_loader
-from data._generator import DataGenerator, FoldGenerator
+from data.generator import data_generator, fold_generator
 from data.loader import fold_loader
 from tools.log_tools import lnr_schedule, plot_confusion, fig_to_img
 from tools.dir_tools import create_dirs
@@ -79,7 +79,7 @@ class _Base:
         if not use_gen:
             self.dataset_train = data_loader(self.dataset_name, 'train')
         else:
-            self.dataset_train = DataGenerator(self.dataset_name)
+            self.dataset_train = data_generator(self.dataset_name)
         self.dataset_valid = data_loader(self.dataset_name, 'valid')
 
     def _build(self):
@@ -133,12 +133,11 @@ class _FoldBase(_Base):
         if not use_gen:
             self.dataset_train = fold_loader(self.dataset_name, 'train', self.fold)
         else:
-            self.dataset_train = FoldGenerator(self.dataset_name, self.fold)
+            self.dataset_train = fold_generator(self.dataset_name, self.fold)
         self.dataset_valid = fold_loader(self.dataset_name, 'evalu', self.fold)
 
-# tf.data pipeline -- processing
 
 # transformer model
 # wait: TPU compatibility
-# Transformer presentation & report
-# BERT presentation
+# BERT & Transformer presentation & report
+# fold generator

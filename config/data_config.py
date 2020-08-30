@@ -38,4 +38,5 @@ data_config = {
   "window": window,
   "stride": stride,
   "ws": ws,
+  "batch": 256,
 }

@@ -5,11 +5,11 @@ import sklearn
 import tensorflow as tf
 from sklearn.utils import class_weight
 from data.loader import encoder_loader
-from config.exec_config import train_config
+from config.data_config import data_config
 from tensorflow.python.keras.utils.data_utils import Sequence
 from tools.data_tools import load_sliding, load_fold
 from data.core import load_xy
-batch = train_config['batch']
+batch = data_config['batch']
 
 
 class BaseGenerator(Sequence):

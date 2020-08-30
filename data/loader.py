@@ -5,11 +5,11 @@ import tensorflow as tf
 from datetime import datetime
 from global_settings import DATA_FOLDER
 from sklearn.utils import class_weight
-from config.exec_config import train_config
+from config.data_config import data_config
 from data.core import load_xy
 from tools.data_tools import load_fold
 from tools.utils import encoder_msg, token_msg, data_msg
-batch = train_config['batch']
+batch = data_config['batch']
 
 
 @encoder_msg

@@ -33,18 +33,18 @@ def load_xy_nest(dataset_name, sliding_):
     x_, y_spar_ = np.array([]).reshape([0, steps, 2 * w]), np.array([]).reshape([0, 1])
 
     # faster than df.iterrows() but memory consuming
-    for index in range(len(sliding_)):
+    for index, row in sliding_.iterrows():
         if index % 1000 == 0:
             print(f'{datetime.now()} Finished {index} / {len(sliding_)}')
 
-        pth, cat = list(sliding_['Path'])[index], list(sliding_['Class'])[index]
-        sta, end = list(sliding_['Start'])[index], list(sliding_['End'])[index]
+        pth, cat = row['Path'], row['Class']
+        sta, end = row['Start'], row['End']
         data_df = pd.read_pickle(os.path.join(RAW_FOLDER, dataset_name, pth))
 
         dtdm_org = load_dtdm(data_df, sta, end)
         dtdm_bin = proc_dtdm(dtdm_org, w, s)
-        dtdm_bin, cat = np.expand_dims(dtdm_bin, axis=0), np.expand_dims([cat], axis=0)
-        x_, y_spar_ = np.vstack([x_, dtdm_bin]), np.vstack([y_spar_, cat])
+        x_ = np.vstack([x_, np.expand_dims(dtdm_bin, axis=0)])
+        y_spar_ = np.vstack([y_spar_, np.expand_dims([cat], axis=0)])
 
     return x_, y_spar_
 
