@@ -7,7 +7,7 @@
 # from tqdm import tqdm_notebook
 # from tensorflow.python.keras.preprocessing.sequence import pad_sequences
 # from global_settings import RAW_FOLDER, DATA_FOLDER
-# from data.process import _load_dtdm, _proc_dtdm
+# from data.core import _load_dtdm, _proc_dtdm
 #
 #
 # def data_saver(dataset_name, set_type='analy'):
@@ -24,14 +24,14 @@
 #
 # def load_xy(dataset_name, catalog):
 #     x, y_spar = [], []
-#
 #     for i in tqdm_notebook(range(len(catalog))):
-#         path_, cat_ = list(catalog['Path'])[i], list(catalog['Class'])[i]
-#         data_df_ = pd.read_pickle(os.path.join(RAW_FOLDER, dataset_name, path_))
+#         pth, cat = list(catalog['Path'])[i], list(catalog['Class'])[i]
+#         data_df = pd.read_pickle(os.path.join(RAW_FOLDER, dataset_name, pth))
 #
-#         dtdm_org = _load_dtdm(data_df_)
+#         dtdm_org = _load_dtdm(data_df)
 #         dtdm_bin = _proc_dtdm(dataset_name, dtdm_org)
-#         x.append(dtdm_bin), y_spar.append(np.array([cat_]))
+#         x.append(dtdm_bin)
+#         y_spar.append(np.array([cat]))
 #
 #     x = pad_sequences(x, value=3.14159, dtype=np.float32, padding='post')
 #     x, y_spar = np.array(x), np.array(y_spar)

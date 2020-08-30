@@ -79,7 +79,7 @@ def build_sliding_nest(dataset_name, catalog_):
     sliding_ = pd.DataFrame(columns=['Path', 'Class', 'N', 'Start', 'End'])
 
     for index, row in catalog_.iterrows():
-        if index != 0 and index % 1000 == 0:
+        if index % 1000 == 0:
             print(f'{datetime.now()} Finished {index} / {len(catalog_)}')
 
         Path, Class, N = row['Path'], row['Class'], row['N']
