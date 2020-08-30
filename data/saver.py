@@ -25,7 +25,7 @@ def data_saver(dataset_name, set_type):
     sliding = load_sliding(dataset_name, set_type)
     encoder = pd.read_pickle(os.path.join(RAW_FOLDER, dataset_name, 'encoder.pkl'))
     x, y_spar = load_xy(dataset_name, sliding)
-    y = encoder.transform(y_spar).toarray().astype(np.float32)
+    y = encoder.transform(y_spar).toarray()
     x, y = x.astype(np.float32), y.astype(np.float32)
 
     with open(os.path.join(DATA_FOLDER, dataset_name, set_type + '.pkl'), 'wb') as handle:

@@ -37,11 +37,12 @@ class _Base:
         self.dataset_name = dataset_name
         self.hyper_param = hyper_param
         self.exp_dir = exp_dir
-        self._load_name()
-        self._load_dir()
-        self._load_path()
-        self._load_enco()
-        self._load_data()
+        with tf.device('/cpu:0'):
+            self._load_name()
+            self._load_dir()
+            self._load_path()
+            self._load_enco()
+            self._load_data()
         with strategy.scope():
             self._build()
             self._compile()

@@ -34,7 +34,7 @@ def data_loader(dataset_name, set_type):
         x, y = pickle.load(handle)
 
     if set_type == 'train':
-        sample_weight = class_weight.compute_sample_weight('balanced', y)
+        sample_weight = np.float32(class_weight.compute_sample_weight('balanced', y))
         dataset = tf.data.Dataset.from_tensor_slices((x, y, sample_weight))
         dataset = dataset.shuffle(np.shape(x)[0], reshuffle_each_iteration=True).batch(batch)
     else:

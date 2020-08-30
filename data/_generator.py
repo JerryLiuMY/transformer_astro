@@ -21,21 +21,20 @@ class BaseGenerator(Sequence):
         return math.ceil(np.shape(self.sliding)[0] / batch)
 
     def __getitem__(self, index):
-        catalog_ = self.sliding.iloc[index * batch: (index + 1) * batch, :]
-        dataset = self._data_generation(catalog_)
+        sliding_ = self.sliding.iloc[index * batch: (index + 1) * batch, :]
+        dataset = self._data_generation(sliding_)
 
         return dataset
 
     def on_epoch_end(self):
         self.sliding = sklearn.utils.shuffle(self.sliding, random_state=0)
 
-    def _data_generation(self, catalog_):
-        x, y_spar = load_xy(self.dataset_name, catalog_)
+    def _data_generation(self, sliding_):
+        x, y_spar = load_xy(self.dataset_name, sliding_)
         y = self.encoder.transform(y_spar).toarray()
-        sample_weight = class_weight.compute_sample_weight('balanced', y)
         x, y = x.astype(np.float32), y.astype(np.float32)
+        sample_weight = np.float32(class_weight.compute_sample_weight('balanced', y))
         dataset = tf.data.Dataset.from_tensor_slices((x, y, sample_weight))
-        dataset = dataset.shuffle(np.shape(x)[0], reshuffle_each_iteration=True).batch(batch)
 
         return dataset
 
@@ -43,11 +42,11 @@ class BaseGenerator(Sequence):
 class DataGenerator(BaseGenerator):
     def __init__(self, dataset_name):
         super().__init__(dataset_name)
-        self.catalog = load_sliding(self.dataset_name, 'train')
+        self.sliding = load_sliding(self.dataset_name, 'train')
 
 
 class FoldGenerator(BaseGenerator):
     def __init__(self, dataset_name, fold):
         super().__init__(dataset_name)
         self.fold = fold
-        self.catalog = load_fold(self.dataset_name, 'train', self.fold)
+        self.sliding = load_fold(self.dataset_name, 'train', self.fold)
