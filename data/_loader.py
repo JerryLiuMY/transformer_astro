@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 from tools.data_tools import load_catalog
 from datetime import datetime
-from tqdm import tqdm_notebook
 from tensorflow.python.keras.preprocessing.sequence import pad_sequences
 from global_settings import RAW_FOLDER, DATA_FOLDER
 from data.core import load_dtdm, proc_dtdm

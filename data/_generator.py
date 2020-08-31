@@ -1,6 +1,5 @@
 import math
 import numpy as np
-import pandas as pd
 import sklearn
 import tensorflow as tf
 from sklearn.utils import class_weight
@@ -12,12 +11,11 @@ from data.core import load_xy
 batch = data_config['batch']
 
 
-class BaseGenerator(Sequence):
+class _BaseGenerator(Sequence):
     def __init__(self, dataset_name):
         self.dataset_name = dataset_name
-        self.sliding = pd.DataFrame()
         self.encoder = encoder_loader(self.dataset_name)
-        self.on_epoch_end()
+        self.sliding = None
 
     def __len__(self):
         return math.ceil(np.shape(self.sliding)[0] / batch)
@@ -41,13 +39,13 @@ class BaseGenerator(Sequence):
         return dataset
 
 
-class DataGenerator(BaseGenerator):
+class DataGenerator(_BaseGenerator):
     def __init__(self, dataset_name):
         super().__init__(dataset_name)
         self.sliding = load_sliding(self.dataset_name, 'train')
 
 
-class FoldGenerator(BaseGenerator):
+class FoldGenerator(_BaseGenerator):
     def __init__(self, dataset_name, fold):
         super().__init__(dataset_name)
         self.fold = fold
