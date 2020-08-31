@@ -13,7 +13,6 @@ ws, batch = data_config['ws'], data_config['batch']
 
 
 class _BaseGenerator:
-
     def __init__(self, dataset_name):
         self.dataset_name = dataset_name
         self.encoder = encoder_loader(self.dataset_name)
@@ -56,7 +55,6 @@ class _BaseGenerator:
 
 
 class DataGenerator(_BaseGenerator):
-
     def __init__(self, dataset_name):
         super().__init__(dataset_name)
         self.sliding = load_sliding(self.dataset_name, 'train')
