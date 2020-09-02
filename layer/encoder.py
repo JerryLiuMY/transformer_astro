@@ -1,5 +1,6 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Layer, Dense
+from tensorflow.keras.layers import Layer, Dense, LayerNormalization, Dropout
+from tensorflow import keras
 
 
 class MultiHeadSelfAttention(Layer):
@@ -45,3 +46,24 @@ class MultiHeadSelfAttention(Layer):
         output = self.com_heads(concat_attention)  # (batch_size, seq_len, embed_dim)
 
         return output
+
+
+class TransformerBlock(Layer):
+    def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
+        super(TransformerBlock, self).__init__()
+        self.att = MultiHeadSelfAttention(embed_dim, num_heads)
+        self.ffn = keras.Sequential(
+            [Dense(ff_dim, activation="relu"), Dense(embed_dim)]
+        )
+        self.layernorm1 = LayerNormalization(epsilon=1e-6)
+        self.layernorm2 = LayerNormalization(epsilon=1e-6)
+        self.dropout1 = Dropout(rate)
+        self.dropout2 = Dropout(rate)
+
+    def call(self, inputs, training):
+        attn_output = self.att(inputs)
+        attn_output = self.dropout1(attn_output, training=training)
+        out1 = self.layernorm1(inputs + attn_output)
+        ffn_output = self.ffn(out1)
+        ffn_output = self.dropout2(ffn_output, training=training)
+        return self.layernorm2(out1 + ffn_output)
