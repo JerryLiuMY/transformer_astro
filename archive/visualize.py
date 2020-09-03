@@ -1,10 +1,11 @@
-import matplotlib.gridspec as gridspec
 from global_settings import RAW_FOLDER
+import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import os
+
 
 sns.set()
 plt.rcParams['axes.labelsize'] = 17
@@ -62,3 +63,48 @@ def _annotate(ax, rects, color):
         height = rect.get_height()
         ax.annotate(format(height, '.2f'), xy=(rect.get_x() + rect.get_width() / 2, height), xytext=(0, 3),
                     textcoords="offset points", ha='center', va='bottom', color=color)
+
+
+def positional():
+    sin_mtx, cos_mtx, alt_mtx = _matrix()
+    fig = plt.figure(figsize=(16, 8))
+    gs = gridspec.GridSpec(3, 2); ax1 = plt.subplot(gs[0:2, 0])
+    ax2 = plt.subplot(gs[0:2, 1]); ax3 = plt.subplot(gs[2:, :])
+    sns.heatmap(sin_mtx, ax=ax1)
+    sns.heatmap(cos_mtx, ax=ax2)
+    sns.heatmap(alt_mtx, ax=ax3, cbar=False)
+
+    for ax in [ax1, ax2, ax3]:
+        ax.set_xlabel('Steps')
+        ax.set_ylabel('Dimension')
+    plt.tight_layout()
+    plt.show()
+
+    return fig
+
+
+def product():
+    _, _, alt_mtx = _matrix()
+    fig, ax = plt.subplots(figsize=(12, 10))
+    score = np.dot(alt_mtx, alt_mtx.T)
+    sns.heatmap(score, ax=ax)
+    plt.tight_layout()
+    plt.show()
+
+    return fig
+
+
+def _matrix():
+    seq, dim = 50, 300
+    sin_mtx = np.zeros((seq, dim))
+    cos_mtx = np.zeros((seq, dim))
+    alt_mtx = np.zeros((seq, dim))
+
+    for t in range(seq):
+        for i in range(dim):
+            sin = np.sin(t * (1 / (10000 ** (i / dim))))
+            cos = np.cos(t * (1 / (10000 ** ((i - 1) / dim))))
+            alt = np.sin(t * (1 / (10000 ** (i / dim)))) if i % 2 == 0 else np.cos(t * (1 / (10000 ** ((i - 1) / dim))))
+            sin_mtx[t, i], cos_mtx[t, i], alt_mtx[t, i] = sin, cos, alt
+
+    return sin_mtx, cos_mtx, alt_mtx
