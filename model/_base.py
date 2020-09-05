@@ -10,8 +10,8 @@ from datetime import datetime
 from data.loader import data_loader, encoder_loader
 from data.generator import DataGenerator, FoldGenerator
 from data.loader import fold_loader
-from tools.log_tools import lnr_schedule, plot_confusion, fig_to_img
 from tools.dir_tools import create_dirs
+from tools.log_tools import lnr_schedule, plot_confusion, fig_to_img
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config, strategy
 
@@ -43,16 +43,15 @@ class _Base:
             self._load_path()
             self._load_enco()
             self._load_data()
+
         with strategy.scope():
             self._build()
             self._compile()
 
     def _load_name(self):
-        rnn_num = self.hyper_param[rnn_nums_hp]
-        rnn_dim = self.hyper_param[rnn_dims_hp]
-        dnn_num = self.hyper_param[dnn_nums_hp]
         now = datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-        self.exp_name = '-'.join([f'rnn_num_{rnn_num}', f'rnn_dim_{rnn_dim}', f'dnn_num_{dnn_num}', now])
+        self.exp_name = '-'.join([f'{h.name}_{self.hyper_param[h]}' for h in self.hyper_param])
+        self.exp_name = '-'.join([self.exp_name, now])
 
         print(f'--- Starting trial: {self.exp_name}')
         print({h.name: self.hyper_param[h] for h in self.hyper_param})
@@ -137,6 +136,4 @@ class _FoldBase(_Base):
         self.dataset_valid = fold_loader(self.dataset_name, 'evalu', self.fold)
 
 
-# transformer model
 # wait: TPU compatibility
-# BERT & Transformer presentation & report

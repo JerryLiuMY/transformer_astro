@@ -15,8 +15,8 @@ ws = data_config['ws']
 
 def load_xy(dataset_name, sliding):
     num_process = 8
-    (w, s) = ws[dataset_name]; steps = (window[dataset_name] - w) // s + 1
-    x, y_spar = np.array([]).reshape([0, steps, 2 * w]), np.array([]).reshape([0, 1])
+    (w, s) = ws[dataset_name]; seq_len = (window[dataset_name] - w) // s + 1
+    x, y_spar = np.array([]).reshape([0, seq_len, 2 * w]), np.array([]).reshape([0, 1])
 
     load_xy_nest_ = functools.partial(load_xy_nest, dataset_name)
     pool, slidings = multiprocessing.Pool(num_process), np.array_split(sliding, num_process)
@@ -29,8 +29,8 @@ def load_xy(dataset_name, sliding):
 
 
 def load_xy_nest(dataset_name, sliding_):
-    (w, s) = ws[dataset_name]; steps = (window[dataset_name] - w) // s + 1
-    x_, y_spar_ = np.array([]).reshape([0, steps, 2 * w]), np.array([]).reshape([0, 1])
+    (w, s) = ws[dataset_name]; seq_len = (window[dataset_name] - w) // s + 1
+    x_, y_spar_ = np.array([]).reshape([0, seq_len, 2 * w]), np.array([]).reshape([0, 1])
 
     # faster than df.iterrows() but memory consuming
     for index, row in sliding_.iterrows():

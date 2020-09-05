@@ -31,7 +31,7 @@ except KeyError:
 
 train_config = {
     "use_gen": False,
-    "epoch": 20,
+    "epoch": 50,
     "metrics": ['CategoricalAccuracy', 'Precision', 'Recall'],
 }
 

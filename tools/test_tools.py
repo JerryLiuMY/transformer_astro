@@ -2,9 +2,10 @@ import os
 from datetime import datetime
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from model.lstm import SimpleLSTM
+from model.transformer import Transformer
 
 
-def get_exp(dataset_name, hyper_param, exp_dir, best_last):
+def get_exp(dataset_name, model_name, hyper_param, exp_dir, best_last):
     # input check
     print(f'{datetime.now()} Making prediction')
     assert best_last in ['best', 'last'], 'Invalid best_last type'
@@ -34,9 +35,9 @@ def get_exp(dataset_name, hyper_param, exp_dir, best_last):
     mod_path = os.path.join(che_path, f'epoch_{bl_step}-val_acc_{bl_vacc}.hdf5')
 
     # get model & experiment
-    exp = SimpleLSTM(dataset_name, hyper_param, exp_dir=exp_dir)
+    model = {'sim': SimpleLSTM, 'tra': Transformer}[model_name]
+    exp = model(dataset_name, hyper_param, exp_dir=exp_dir)
     exp.exp_name = exp_name
     exp.model.load_weights(mod_path)
 
     return exp
-
