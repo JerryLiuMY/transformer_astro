@@ -1,8 +1,3 @@
-"""
-Reference: Apoorv Nandan
-https://keras.io/examples/nlp/text_classification_with_transformer/
-"""
-
 from tensorflow.keras.layers import Layer, Dense, LayerNormalization, Dropout
 from tensorflow.keras import regularizers
 from tensorflow import keras
