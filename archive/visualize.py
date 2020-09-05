@@ -75,8 +75,8 @@ def positional():
     sns.heatmap(alt_mtx, ax=ax3, cbar=False)
 
     for ax in [ax1, ax2, ax3]:
-        ax.set_xlabel('Steps')
-        ax.set_ylabel('Dimension')
+        ax.set_xlabel('Embedding Position')
+        ax.set_ylabel('Time-steps')
     plt.tight_layout()
     plt.show()
 
@@ -88,6 +88,8 @@ def product():
     fig, ax = plt.subplots(figsize=(12, 10))
     score = np.dot(alt_mtx, alt_mtx.T)
     sns.heatmap(score, ax=ax)
+    ax.set_xlabel('Steps')
+    ax.set_ylabel('Steps')
     plt.tight_layout()
     plt.show()
 
