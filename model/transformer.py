@@ -1,6 +1,6 @@
 from model._base import _Base, _FoldBase
 from tensorflow.keras.layers import GlobalAveragePooling1D, Input, Dense
-from layer.encoder import Embedding, TransformerBlock
+from layer.encoder import Embedding, Encoder
 from config.model_config import heads_hp, emb_dims_hp, ffn_dims_hp
 from config.data_config import data_config
 from config.exec_config import train_config
@@ -19,9 +19,9 @@ class Transformer(_Base):
         (w, s) = ws[self.dataset_name]; seq_len = (window[self.dataset_name] - w) // s + 1
         inputs = Input(shape=(seq_len, w * 2))
         embedding = Embedding(seq_len, self.hyper_param[emb_dims_hp])
-        transformer = TransformerBlock(self.hyper_param[heads_hp],
-                                       self.hyper_param[emb_dims_hp],
-                                       self.hyper_param[ffn_dims_hp])
+        transformer = Encoder(self.hyper_param[heads_hp],
+                              self.hyper_param[emb_dims_hp],
+                              self.hyper_param[ffn_dims_hp])
 
         x = embedding(inputs)
         x = transformer(x)

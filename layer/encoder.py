@@ -1,4 +1,4 @@
-from tensorflow.keras.layers import Layer, Dense, LayerNormalization, Dropout
+from tensorflow.keras.layers import Layer, Dense, LayerNormalization
 from tensorflow.keras import regularizers
 from tensorflow import keras
 import tensorflow as tf
@@ -41,13 +41,13 @@ class Embedding(Layer):
         return t * freq
 
 
-class TransformerBlock(Layer):
+class Encoder(Layer):
     def __init__(self, head, emb_dim, ffn_dim):
-        super(TransformerBlock, self).__init__()
+        super(Encoder, self).__init__()
         self.att = MultiHeadedAttention(head, emb_dim)
         self.ffn = keras.Sequential([
             Dense(emb_dim),
-            Dense(ffn_dim, recurrent_regularizer=regularizers.l2(0.1), activation='relu'),
+            Dense(ffn_dim, kernel_regularizer=regularizers.l2(0.1), activation='relu'),
             Dense(emb_dim)
         ])
         self.norm1 = LayerNormalization(epsilon=1e-6)
