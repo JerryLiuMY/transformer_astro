@@ -66,13 +66,14 @@ class Transformer(_Base):
 
             self.seq2seq = Model(inputs=inputs, outputs=dec_outputs)
 
-    def _compile(self):
+    def _compile_seq(self):
         if implementation in [1, 2]:
             self.seq2seq.compile(
                 loss='mse',
                 optimizer='adam'
             )
 
+    def _compile(self):
         self.model.compile(
             loss='categorical_crossentropy',
             optimizer='adam',
@@ -82,15 +83,17 @@ class Transformer(_Base):
         seq_dataset = seq_loader(self.dataset_name, 'train')
 
         for e in range(epoch):
-            if implementation == 1:
+            if implementation in [1, 2]:
                 self.seq2seq.trainable = True
+                self._compile_seq()
+            if implementation == 1:
                 self.seq2seq.fit(x=seq_dataset, initial_epoch=e, epochs=e+1)
                 self.seq2seq.trainable = False
             elif implementation == 2:
-                self.seq2seq.trainable = True
                 self.seq2seq.fit(x=seq_dataset, initial_epoch=e, epochs=e+1)
                 self.seq2seq.trainable = True
 
+            self._compile()
             self.model.fit(
                 x=self.dataset_train, validation_data=self.dataset_valid, initial_epoch=e, epochs=e+1,
                 verbose=1, max_queue_size=10, workers=5, callbacks=self.callbacks
