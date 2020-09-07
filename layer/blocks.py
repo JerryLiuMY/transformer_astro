@@ -60,7 +60,7 @@ class Encoder(Layer):
 
 
 class Decoder(Layer):
-    def __init__(self, head, emb_dim, ffn_dim):
+    def __init__(self, head, emb_dim, ffn_dim, inp_dim):
         super(Decoder, self).__init__()
         self.att1 = MultiHeadAttention(head, emb_dim)
         self.att2 = MultiHeadAttention(head, emb_dim)
@@ -68,7 +68,7 @@ class Decoder(Layer):
         self.norm1 = LayerNormalization(epsilon=1e-6)
         self.norm2 = LayerNormalization(epsilon=1e-6)
         self.norm3 = LayerNormalization(epsilon=1e-6)
-        self.dnn = Dense(emb_dim)
+        self.dnn = Dense(inp_dim)
 
     def call(self, inputs, **kwargs):
         embeddings, enc_outputs = inputs

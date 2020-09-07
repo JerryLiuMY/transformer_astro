@@ -4,12 +4,14 @@ from layer.blocks import Embedding, Encoder, Decoder, Classifier
 from config.model_config import heads_hp, emb_dims_hp, ffn_dims_hp
 from config.data_config import data_config
 from config.exec_config import train_config
+from data.loader import seq_loader
 from keras import Model
-import tensorflow as tf
+
 
 window, ws = data_config['window'], data_config['ws']
 use_gen, epoch = train_config['use_gen'], train_config['epoch']
 implementation = train_config['implementation']
+metrics = train_config['metrics']
 
 
 class Transformer(_Base):
@@ -40,7 +42,8 @@ class Transformer(_Base):
         self.decoder = Decoder(
             self.hyper_param[heads_hp],
             self.hyper_param[emb_dims_hp],
-            self.hyper_param[ffn_dims_hp]
+            self.hyper_param[ffn_dims_hp],
+            w * 2
         )
 
         self.classifier = Classifier(
@@ -49,53 +52,45 @@ class Transformer(_Base):
         )
 
         inputs = Input(shape=(seq_len, w * 2))
-        print(implementation)
-        if implementation == 0:
-            embeddings1 = self.embedding1(inputs)
-            enc_outputs = self.encoder(embeddings1)
-            outputs = self.classifier(enc_outputs)
-            self.model = Model(inputs=inputs, outputs=outputs)
 
-        elif implementation in [1, 2]:
-            embeddings1 = self.embedding1(inputs)
+        embeddings1 = self.embedding1(inputs)
+        enc_outputs = self.encoder(embeddings1)
+        outputs = self.classifier(enc_outputs)
+        self.model = Model(inputs=inputs, outputs=outputs)
+
+        if implementation in [1, 2]:
             embeddings2 = self.embedding2(inputs)
-            enc_outputs = self.encoder(embeddings1)
             dec_outputs = self.decoder([embeddings2, enc_outputs])
-            outputs = self.classifier(enc_outputs)
-            self.model = [Model(inputs=inputs, outputs=dec_outputs), Model(inputs=inputs, outputs=outputs)]
 
-        else:
-            raise AssertionError('Invalid implementation')
+            self.seq2seq = Model(inputs=inputs, outputs=dec_outputs)
 
-    def load_sequence(self):
-        dataset = None
-        for x, y, sample_weight in self.dataset_train:
-            if dataset is None:
-                dataset = tf.data.Dataset.from_tensor_slices(x)
-            else:
-                dataset = dataset.concatenate(tf.data.Dataset.from_tensor_slices(x))
+    def _compile(self):
+        self.model.compile(
+            loss='categorical_crossentropy',
+            optimizer='adam',
+            metrics=metrics)
 
-        seq_dataset = tf.data.Dataset.zip((dataset, dataset))
-
-        return seq_dataset
+        self.seq2seq.compile(
+            loss='mse',
+            optimizer='adam'
+        )
 
     def run(self):
         if implementation == 0:
             super().run()
 
         elif implementation in [1, 2]:
-            transformer, classifier = self.model
-            seq_dataset = self.load_sequence()
+            seq_dataset = seq_loader(self.dataset_name, 'train')
             for e in range(epoch):
-                transformer.trainable = True
+                self.seq2seq.trainable = True
                 if implementation == 1:
-                    transformer.train_on_batch(seq_dataset)
-                    transformer.trainable = False
+                    self.seq2seq.fit(x=seq_dataset, initial_epoch=e, epochs=e+1)
+                    self.seq2seq.trainable = False
                 else:
-                    transformer.train_on_batch(seq_dataset)
-                    transformer.trainable = True
+                    self.seq2seq.fit(x=seq_dataset, initial_epoch=e, epochs=e+1)
+                    self.seq2seq.trainable = True
 
-                classifier.fit(
+                self.model.fit(
                     x=self.dataset_train, validation_data=self.dataset_valid, initial_epoch=e, epochs=e+1,
                     verbose=1, max_queue_size=10, workers=5, callbacks=self._callbacks()
                 )

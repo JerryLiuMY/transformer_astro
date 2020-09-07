@@ -44,6 +44,17 @@ def data_loader(dataset_name, set_type):
     return dataset
 
 
+@data_msg
+def seq_loader(dataset_name, set_type):
+    with open(os.path.join(DATA_FOLDER, dataset_name, set_type + '.pkl'), 'rb') as handle:
+        x, y = pickle.load(handle)
+
+    dataset = tf.data.Dataset.from_tensor_slices((x, x))
+    dataset = dataset.batch(batch)
+
+    return dataset
+
+
 def fold_loader(dataset_name, set_type, fold):
     print(f'{datetime.now()} Loading {dataset_name} {set_type} set fold {fold}')
 
