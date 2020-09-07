@@ -1,7 +1,8 @@
 from tensorflow.keras.layers import GlobalAveragePooling1D
 from tensorflow.python.keras.engine.base_layer import Layer
-from tensorflow.python.keras.layers import LayerNormalization, Dense
+from tensorflow.python.keras.layers import LayerNormalization, Dense, ReLU
 from layer.multihead import MultiHeadAttention, FFN
+from tensorflow.keras import regularizers
 import tensorflow as tf
 import numpy as np
 
@@ -89,12 +90,23 @@ class Classifier(Layer):
     def __init__(self, categories, ffn_dim, name='classifier'):
         super(Classifier, self).__init__(name=name)
         self.poo = GlobalAveragePooling1D()
-        self.dnn = Dense(ffn_dim, activation='relu')
+
+        self.dnn1 = Dense(ffn_dim, kernel_regularizer=regularizers.l2(0.1))
+        self.dnn2 = Dense(ffn_dim, kernel_regularizer=regularizers.l2(0.1))
+        self.norm1 = LayerNormalization(epsilon=1e-6)
+        self.norm2 = LayerNormalization(epsilon=1e-6)
+        self.relu1 = ReLU()
+        self.relu2 = ReLU()
         self.sfm = Dense(units=len(categories), activation='softmax', name='softmax')
 
     def call(self, inputs, **kwargs):
         poo_outputs = self.poo(inputs)
-        dnn_outputs = self.dnn(poo_outputs)
+        int_outputs = self.dnn1(poo_outputs)
+        int_outputs = self.norm1(int_outputs)
+        int_outputs = self.relu1(int_outputs)
+        int_outputs = self.dnn2(int_outputs)
+        int_outputs = self.norm2(int_outputs)
+        dnn_outputs = self.relu2(int_outputs)
         outputs = self.sfm(dnn_outputs)
 
         return outputs

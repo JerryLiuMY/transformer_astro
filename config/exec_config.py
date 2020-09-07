@@ -33,7 +33,7 @@ train_config = {
     "use_gen": False,
     "epoch": 70,
     "metrics": ['CategoricalAccuracy', 'Precision', 'Recall'],
-    "implementation": 0
+    "implementation": 1
     # [0: encoder only, 1: encoder-decoder freeze, 2: encoder-decoder trainable]
 }
 

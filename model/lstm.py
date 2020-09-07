@@ -1,6 +1,6 @@
 import numpy as np
 from model._base import _Base, _FoldBase
-from tensorflow.keras.layers import LayerNormalization, GlobalAveragePooling1D, TimeDistributed
+from tensorflow.keras.layers import LayerNormalization, GlobalAveragePooling1D
 from tensorflow.keras.layers import LSTM, Dense, ReLU, Masking
 from tensorflow.keras.models import Sequential
 from tensorflow.keras import regularizers
@@ -37,14 +37,14 @@ class SimpleLSTM(_Base):
             model.add(LayerNormalization())
 
         for _ in range(self.hyper_param[dnn_nums_hp]):
-            model.add(TimeDistributed(Dense(
+            model.add(Dense(
                 units=self.hyper_param[rnn_dims_hp] * 2,
-                kernel_regularizer=regularizers.l2(0.1)))
+                kernel_regularizer=regularizers.l2(0.1))
             )
             model.add(LayerNormalization())
             model.add(ReLU())
 
-        model.add(TimeDistributed(Dense(units=len(self.categories), activation='softmax'), name='softmax'))
+        model.add(Dense(units=len(self.categories), activation='softmax'), name='softmax')
         model.add(GlobalAveragePooling1D(data_format='channels_last'))
 
         self.model = model
