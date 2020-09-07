@@ -54,7 +54,6 @@ class Transformer(_Base):
         )
 
         inputs = Input(shape=(seq_len, w * 2))
-
         embeddings1 = self.embedding1(inputs)
         enc_outputs = self.encoder(embeddings1)
         outputs = self.classifier(enc_outputs)
@@ -70,7 +69,8 @@ class Transformer(_Base):
         self.model.compile(
             loss='categorical_crossentropy',
             optimizer='adam',
-            metrics=self.metrics)
+            metrics=self.metrics
+        )
 
     def _compile_seq(self):
         self.seq2seq.compile(

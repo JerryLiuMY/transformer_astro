@@ -31,9 +31,9 @@ except KeyError:
 
 train_config = {
     "use_gen": False,
-    "epoch": 70,
+    "epoch": 150,
     "metrics": ['CategoricalAccuracy', 'Precision', 'Recall'],
-    "implementation": 1
+    "implementation": 2
     # [0: encoder only, 1: encoder-decoder freeze, 2: encoder-decoder trainable]
 }
 

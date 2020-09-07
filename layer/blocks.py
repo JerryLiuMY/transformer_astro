@@ -91,8 +91,8 @@ class Classifier(Layer):
         super(Classifier, self).__init__(name=name)
         self.poo = GlobalAveragePooling1D()
 
-        self.dnn1 = Dense(ffn_dim, kernel_regularizer=regularizers.l2(0.1))
-        self.dnn2 = Dense(ffn_dim, kernel_regularizer=regularizers.l2(0.1))
+        self.dnn1 = Dense(ffn_dim, kernel_regularizer=regularizers.l2(0.15))
+        self.dnn2 = Dense(ffn_dim, kernel_regularizer=regularizers.l2(0.15))
         self.norm1 = LayerNormalization(epsilon=1e-6)
         self.norm2 = LayerNormalization(epsilon=1e-6)
         self.relu1 = ReLU()
