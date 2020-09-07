@@ -3,7 +3,7 @@ import numpy as np
 import sklearn
 import tensorflow as tf
 from sklearn.utils import class_weight
-from data.loader import encoder_loader
+from data.loader import one_hot_loader
 from config.data_config import data_config
 from tensorflow.python.keras.utils.data_utils import Sequence
 from tools.data_tools import load_sliding, load_fold
@@ -14,7 +14,7 @@ batch = data_config['batch']
 class _BaseGenerator(Sequence):
     def __init__(self, dataset_name):
         self.dataset_name = dataset_name
-        self.encoder = encoder_loader(self.dataset_name)
+        self.one_hot = one_hot_loader(self.dataset_name)
         self.sliding = None
 
     def __len__(self):
@@ -31,7 +31,7 @@ class _BaseGenerator(Sequence):
 
     def _data_generation(self, sliding_):
         x, y_spar = load_xy(self.dataset_name, sliding_)
-        y = self.encoder.transform(y_spar).toarray()
+        y = self.one_hot.transform(y_spar).toarray()
         x, y = x.astype(np.float32), y.astype(np.float32)
         sample_weight = np.float32(class_weight.compute_sample_weight('balanced', y))
         dataset = tf.data.Dataset.from_tensor_slices((x, y, sample_weight)).batch(batch)

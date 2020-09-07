@@ -49,7 +49,8 @@ class Encoder(Layer):
         self.norm2 = LayerNormalization(epsilon=1e-6)
 
     def call(self, inputs, **kwargs):
-        att_outputs = self.att(inputs)
+        embeddings = inputs
+        att_outputs = self.att([embeddings, embeddings, embeddings])
         att_outputs = self.norm1(inputs + att_outputs)
 
         enc_outputs = self.ffn(att_outputs)

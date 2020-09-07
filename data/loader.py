@@ -13,11 +13,11 @@ batch = data_config['batch']
 
 
 @encoder_msg
-def encoder_loader(dataset_name):
+def one_hot_loader(dataset_name):
     with open(os.path.join(DATA_FOLDER, dataset_name, 'encoder.pkl'), 'rb') as handle:
-        encoder = pickle.load(handle)
+        one_hot = pickle.load(handle)
 
-    return encoder
+    return one_hot
 
 
 @token_msg
@@ -48,9 +48,9 @@ def fold_loader(dataset_name, set_type, fold):
     print(f'{datetime.now()} Loading {dataset_name} {set_type} set fold {fold}')
 
     sliding = load_fold(dataset_name, set_type, fold)
-    encoder = encoder_loader(dataset_name)
+    one_hot = one_hot_loader(dataset_name)
     x, y_spar = load_xy(dataset_name, sliding)
-    y = encoder.transform(y_spar).toarray().astype(np.float32)
+    y = one_hot.transform(y_spar).toarray().astype(np.float32)
     x, y = x.astype(np.float32), y.astype(np.float32)
 
     dataset = tf.data.Dataset.from_tensor_slices((x, y))

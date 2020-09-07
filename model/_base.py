@@ -7,7 +7,7 @@ from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorflow.keras.backend import clear_session
 from tensorboard.plugins.hparams import api as hp
 from datetime import datetime
-from data.loader import data_loader, encoder_loader
+from data.loader import data_loader, one_hot_loader
 from data.generator import DataGenerator, FoldGenerator
 from data.loader import fold_loader
 from tools.dir_tools import create_dirs
@@ -70,9 +70,9 @@ class _Base:
         self.che_path = os.path.join(self.che_dir, self.exp_name)
 
     def _load_enco(self):
-        encoder = encoder_loader(self.dataset_name)
-        self.encoder = encoder
-        self.categories = encoder.categories_[0]
+        one_hot = one_hot_loader(self.dataset_name)
+        self.one_hot = one_hot
+        self.categories = one_hot.categories_[0]
 
     def _load_data(self):
         if not use_gen:
@@ -115,8 +115,8 @@ class _Base:
         max_arg = tf.math.argmax(self.model.predict(self.dataset_valid), axis=1)
         y_predi = tf.one_hot(max_arg, depth=len(self.categories)).numpy()
 
-        y_evalu_spar = self.encoder.inverse_transform(y_evalu)
-        y_predi_spar = self.encoder.inverse_transform(y_predi)
+        y_evalu_spar = self.one_hot.inverse_transform(y_evalu)
+        y_predi_spar = self.one_hot.inverse_transform(y_predi)
         confusion_fig = plot_confusion(y_evalu_spar, y_predi_spar, categories=self.categories)
         confusion_img = fig_to_img(confusion_fig)
 

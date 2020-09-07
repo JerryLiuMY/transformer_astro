@@ -7,7 +7,7 @@ from global_settings import RAW_FOLDER
 from config.data_config import data_config
 from data.core import load_dtdm, proc_dtdm
 from sklearn.utils import class_weight
-from data.loader import encoder_loader
+from data.loader import one_hot_loader
 window, stride = data_config['window'], data_config['stride']
 ws, batch = data_config['ws'], data_config['batch']
 
@@ -15,7 +15,7 @@ ws, batch = data_config['ws'], data_config['batch']
 class _BaseGenerator:
     def __init__(self, dataset_name):
         self.dataset_name = dataset_name
-        self.encoder = encoder_loader(self.dataset_name)
+        self.one_hot = one_hot_loader(self.dataset_name)
         self.sliding = load_sliding(self.dataset_name, 'train')
 
         self.window = window[self.dataset_name]
@@ -28,7 +28,7 @@ class _BaseGenerator:
             self._data_generation,
             output_types=(tf.float32, tf.float32, tf.float32),
             output_shapes=(tf.TensorShape([None, steps, 2 * self.w]),
-                           tf.TensorShape([None, len(self.encoder.categories_[0])]),
+                           tf.TensorShape([None, len(self.one_hot.categories_[0])]),
                            tf.TensorShape([None]))
         )
 
@@ -47,7 +47,7 @@ class _BaseGenerator:
             dtdm_org = load_dtdm(data_df, sta, end)
             dtdm_bin = proc_dtdm(dtdm_org, self.w, self.s)
             x = np.expand_dims(dtdm_bin, axis=0)
-            y = self.encoder.transform(np.expand_dims([cat], axis=0)).toarray()
+            y = self.one_hot.transform(np.expand_dims([cat], axis=0)).toarray()
             x, y = x.astype(np.float32), y.astype(np.float32)
             sample_weight = np.float32(class_weight.compute_sample_weight('balanced', y))
 
