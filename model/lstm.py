@@ -8,7 +8,8 @@ from config.data_config import data_config
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config
 
-use_gen, ws = train_config['use_gen'], data_config['ws']
+use_gen, epoch = train_config['use_gen'], train_config['epoch']
+ws = data_config['ws']
 
 
 class SimpleLSTM(_Base):

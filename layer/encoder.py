@@ -1,10 +1,9 @@
-from tensorflow.keras.layers import Layer, Dense, LayerNormalization
-from tensorflow.keras import regularizers
-from tensorflow import keras
+from tensorflow.keras.layers import GlobalAveragePooling1D
+from tensorflow.python.keras.engine.base_layer import Layer
+from tensorflow.python.keras.layers import LayerNormalization, Dense
+from layer.multihead import MultiHeadAttention, FFN
 import tensorflow as tf
 import numpy as np
-
-# TODO: change to embedding
 
 
 class Embedding(Layer):
@@ -16,11 +15,11 @@ class Embedding(Layer):
 
     def call(self, inputs, **kwargs):
         # broadcast
-        embedding = self.dense(inputs)
+        word2vecs = self.dense(inputs)
         encodings = self.positional(self.seq_len, self.emb_dim)
-        encodings = tf.math.add(embedding, encodings)
+        embeddings = tf.math.add(word2vecs, encodings)
 
-        return encodings
+        return embeddings
 
     def positional(self, seq_len, emb_dim):
         rads = self.get_rad(np.arange(seq_len)[:, np.newaxis],
@@ -42,70 +41,58 @@ class Embedding(Layer):
 
 
 class Encoder(Layer):
-    def __init__(self, head, emb_dim, ffn_dim):
-        super(Encoder, self).__init__()
-        self.att = MultiHeadedAttention(head, emb_dim)
-        self.ffn = keras.Sequential([
-            Dense(emb_dim),
-            Dense(ffn_dim, kernel_regularizer=regularizers.l2(0.1), activation='relu'),
-            Dense(emb_dim)
-        ])
+    def __init__(self, head, emb_dim, ffn_dim, name='encoder'):
+        super(Encoder, self).__init__(name=name)
+        self.att = MultiHeadAttention(head, emb_dim)
+        self.ffn = FFN(emb_dim, ffn_dim)
         self.norm1 = LayerNormalization(epsilon=1e-6)
         self.norm2 = LayerNormalization(epsilon=1e-6)
 
     def call(self, inputs, **kwargs):
-        att_outputs = self.att(inputs)
+        encodings, = inputs
+        att_outputs = self.att(encodings)
         att_outputs = self.norm1(inputs + att_outputs)
 
-        ffn_outputs = self.ffn(att_outputs)
-        ffn_outputs = self.norm2(att_outputs + ffn_outputs)
+        enc_outputs = self.ffn(att_outputs)
+        enc_outputs = self.norm2(att_outputs + enc_outputs)
 
-        return ffn_outputs
+        return enc_outputs
 
 
-class MultiHeadedAttention(Layer):
-    def __init__(self, head, emb_dim):
-        super(MultiHeadedAttention, self).__init__()
-        if emb_dim % head != 0:
-            raise ValueError(f'embedding dimension = {emb_dim} should be divisible by number of head = {head}')
-        self.head = head
-        self.emb_dim = emb_dim
-        self.att_dim = int(emb_dim) // int(head)
-
-        self.que_linear = Dense(emb_dim)
-        self.key_linear = Dense(emb_dim)
-        self.val_linear = Dense(emb_dim)
-        self.con_linear = Dense(emb_dim)
+class Decoder(Layer):
+    def __init__(self, head, emb_dim, ffn_dim):
+        super(Decoder, self).__init__()
+        self.att1 = MultiHeadAttention(head, emb_dim)
+        self.att2 = MultiHeadAttention(head, emb_dim)
+        self.ffn = FFN(emb_dim, ffn_dim)
+        self.norm1 = LayerNormalization(epsilon=1e-6)
+        self.norm2 = LayerNormalization(epsilon=1e-6)
+        self.norm3 = LayerNormalization(epsilon=1e-6)
 
     def call(self, inputs, **kwargs):
-        # que, key, val
-        que = self.que_linear(inputs)  # (batch, seq_len, emb_dim)
-        key = self.key_linear(inputs)  # (batch, seq_len, emb_dim)
-        val = self.val_linear(inputs)  # (batch, seq_len, emb_dim)
+        encodings, enc_outputs = inputs
+        att_outputs1 = self.att1([encodings, encodings, encodings])
+        att_outputs1 = self.norm1(att_outputs1 + encodings)
 
-        # attention
-        batch = tf.shape(inputs)[0]
-        que = self.separate(que, batch)  # (batch, head, seq_len, att_dim)
-        key = self.separate(key, batch)  # (batch, head, seq_len, att_dim)
-        val = self.separate(val, batch)  # (batch , head, seq_len, att_dim)
-        dot_outputs = self.attention(que, key, val)
+        att_outputs2 = self.att2([att_outputs1, enc_outputs, enc_outputs])
+        att_outputs2 = self.norm2(att_outputs2 + att_outputs1)
 
-        # concatenate + linear
-        dot_outputs = tf.transpose(dot_outputs, perm=[0, 2, 1, 3])  # (batch, seq_len, head, att_dim)
-        att_outputs = tf.reshape(dot_outputs, (batch, -1, self.emb_dim))  # (batch, seq_len, emb_dim)
-        att_outputs = self.con_linear(att_outputs)  # (batch, seq_len, emb_dim)
+        dec_outputs = self.ffn(att_outputs2)
+        dec_outputs = self.norm3(att_outputs2 + dec_outputs)
 
-        return att_outputs
+        return dec_outputs
 
-    def separate(self, x, batch):
-        x = tf.reshape(x, (batch, -1, self.head, self.att_dim))
 
-        return tf.transpose(x, perm=[0, 2, 1, 3])
+class Classifier(Layer):
+    def __init__(self, categories, ffn_dim, name='classifier'):
+        super(Classifier, self).__init__(name=name)
+        self.poo = GlobalAveragePooling1D()
+        self.dnn = Dense(ffn_dim, activation='relu')
+        self.sfm = Dense(units=len(categories), activation='softmax', name='softmax')
 
-    def attention(self, query, key, value):
-        key_dim = tf.cast(self.emb_dim, tf.float32)
-        scores = tf.matmul(query, key, transpose_b=True) / tf.math.sqrt(key_dim)
-        weights = tf.nn.softmax(scores, axis=-1)
-        outputs = tf.matmul(weights, value)
+    def call(self, inputs, **kwargs):
+        poo_outputs = self.poo(inputs)
+        dnn_outputs = self.dnn(poo_outputs)
+        outputs = self.sfm(dnn_outputs)
 
         return outputs

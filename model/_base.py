@@ -92,7 +92,12 @@ class _Base:
             metrics=metrics)
 
     def run(self):
-        create_dirs(self.his_path, self.img_path, self.hyp_path, self.che_path)
+        self.model.fit(
+            x=self.dataset_train, validation_data=self.dataset_valid, epochs=epoch,
+            verbose=1, max_queue_size=10, workers=5, callbacks=self._callbacks()
+        )
+
+    def _callbacks(self):
         checkpoint = os.path.join(self.che_path, 'epoch_{epoch:02d}-val_acc_{val_categorical_accuracy:.3f}.hdf5')
         lnr_callback = LearningRateScheduler(schedule=lnr_schedule, verbose=1)
         his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
@@ -101,10 +106,7 @@ class _Base:
         hyp_callback = hp.KerasCallback(self.hyp_path, self.hyper_param)
         callbacks = [lnr_callback, his_callback, img_callback, che_callback, hyp_callback]
 
-        self.model.fit(
-            x=self.dataset_train, validation_data=self.dataset_valid, epochs=epoch,
-            verbose=1, max_queue_size=10, workers=5, callbacks=callbacks
-        )
+        return callbacks
 
     def _log_confusion(self, step, logs):
         y_evalu = np.array([]).reshape(0, len(self.categories))
@@ -134,6 +136,3 @@ class _FoldBase(_Base):
         else:
             self.dataset_train = FoldGenerator(self.dataset_name, self.fold).get_dataset()
         self.dataset_valid = fold_loader(self.dataset_name, 'evalu', self.fold)
-
-
-# wait: TPU compatibility
