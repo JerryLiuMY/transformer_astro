@@ -3,7 +3,7 @@ from tensorflow.keras.layers import Input
 from layer.blocks import Embedding, Encoder, Decoder, Classifier
 from config.model_config import heads_hp, emb_dims_hp, ffn_dims_hp
 from config.data_config import data_config
-from config.exec_config import train_config
+from config.exec_config import train_config, strategy
 from data.loader import seq_loader
 from keras import Model
 
@@ -68,20 +68,18 @@ class Transformer(_Base):
         self.model.compile(
             loss='categorical_crossentropy',
             optimizer='adam',
-            metrics=metrics)
+            metrics=self.metrics)
 
-        self.seq2seq.compile(
-            loss='mse',
-            optimizer='adam'
-        )
+        if implementation in [1, 2]:
+            self.seq2seq.compile(
+                loss='mse',
+                optimizer='adam'
+            )
 
     def run(self):
-        if implementation == 0:
-            super().run()
-
-        elif implementation in [1, 2]:
-            seq_dataset = seq_loader(self.dataset_name, 'train')
-            for e in range(epoch):
+        seq_dataset = seq_loader(self.dataset_name, 'train')
+        for e in range(epoch):
+            if implementation in [1, 2]:
                 self.seq2seq.trainable = True
                 if implementation == 1:
                     self.seq2seq.fit(x=seq_dataset, initial_epoch=e, epochs=e+1)
@@ -90,10 +88,10 @@ class Transformer(_Base):
                     self.seq2seq.fit(x=seq_dataset, initial_epoch=e, epochs=e+1)
                     self.seq2seq.trainable = True
 
-                self.model.fit(
-                    x=self.dataset_train, validation_data=self.dataset_valid, initial_epoch=e, epochs=e+1,
-                    verbose=1, max_queue_size=10, workers=5, callbacks=self._callbacks()
-                )
+            self.model.fit(
+                x=self.dataset_train, validation_data=self.dataset_valid, initial_epoch=e, epochs=e+1,
+                verbose=1, max_queue_size=10, workers=5, callbacks=self.callbacks
+            )
 
         else:
             raise AssertionError('Invalid implementation')

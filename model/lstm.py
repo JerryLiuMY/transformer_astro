@@ -6,7 +6,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras import regularizers
 from config.data_config import data_config
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
-from config.exec_config import train_config
+from config.exec_config import train_config, strategy
 
 use_gen, epoch = train_config['use_gen'], train_config['epoch']
 ws = data_config['ws']
@@ -16,6 +16,9 @@ class SimpleLSTM(_Base):
 
     def __init__(self, dataset_name, hyper_param, exp_dir):
         super().__init__(dataset_name, hyper_param, exp_dir)
+        with strategy.scope():
+            self._build()
+            self._compile()
 
     def _build(self):
         # WARNING: Masking is only supported in the CPU environment (not supported for CuDNN RNNs)
@@ -42,6 +45,19 @@ class SimpleLSTM(_Base):
         model.add(GlobalAveragePooling1D(data_format='channels_last'))
 
         self.model = model
+
+    def _compile(self):
+        self.model.compile(
+            loss='categorical_crossentropy',
+            optimizer='adam',
+            metrics=self.metrics)
+
+    def run(self):
+        self.model.fit(
+            x=self.dataset_train, validation_data=self.dataset_valid, epochs=epoch,
+            verbose=1, max_queue_size=10, workers=5, callbacks=self.callbacks
+        )
+
 
 
 class FoldSimpleLSTM(SimpleLSTM, _FoldBase):

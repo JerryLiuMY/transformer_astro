@@ -13,7 +13,7 @@ from data.loader import fold_loader
 from tools.dir_tools import create_dirs
 from tools.log_tools import lnr_schedule, plot_confusion, fig_to_img
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
-from config.exec_config import train_config, strategy
+from config.exec_config import train_config
 
 use_gen, epoch = train_config['use_gen'], train_config['epoch']
 metrics, metric_names = train_config['metrics'], ['epoch_loss']
@@ -43,10 +43,8 @@ class _Base:
             self._load_path()
             self._load_enco()
             self._load_data()
-
-        with strategy.scope():
-            self._build()
-            self._compile()
+            self._load_call()
+            self.metrics = metrics
 
     def _load_name(self):
         now = datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
@@ -81,32 +79,22 @@ class _Base:
             self.dataset_train = DataGenerator(self.dataset_name).get_dataset()
         self.dataset_valid = data_loader(self.dataset_name, 'valid')
 
-    def _build(self):
-        model = None
-        self.model = model
-
-    def _compile(self):
-        self.model.compile(
-            loss='categorical_crossentropy',
-            optimizer='adam',
-            metrics=metrics)
-
-    def run(self):
-        self.model.fit(
-            x=self.dataset_train, validation_data=self.dataset_valid, epochs=epoch,
-            verbose=1, max_queue_size=10, workers=5, callbacks=self._callbacks()
-        )
-
-    def _callbacks(self):
+    def _load_call(self):
         checkpoint = os.path.join(self.che_path, 'epoch_{epoch:02d}-val_acc_{val_categorical_accuracy:.3f}.hdf5')
         lnr_callback = LearningRateScheduler(schedule=lnr_schedule, verbose=1)
         his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
         img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
         che_callback = ModelCheckpoint(filepath=checkpoint, save_weights_only=True)
         hyp_callback = hp.KerasCallback(self.hyp_path, self.hyper_param)
-        callbacks = [lnr_callback, his_callback, img_callback, che_callback, hyp_callback]
+        self.callbacks = [lnr_callback, his_callback, img_callback, che_callback, hyp_callback]
 
-        return callbacks
+    # build, compile & train model
+    def _build(self):
+        model = None
+        self.model = model
+
+    def _compile(self):
+        self.model.compile()
 
     def _log_confusion(self, step, logs):
         y_evalu = np.array([]).reshape(0, len(self.categories))
