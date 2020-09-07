@@ -4,7 +4,7 @@ import argparse
 from tools.dir_tools import get_log_dir, get_exp_dir
 from model._base import log_params
 from model.lstm import SimpleLSTM, FoldSimpleLSTM
-from model.attention import Attention, FoldAttention
+from model.transformer import Transformer
 from config.exec_config import evalu_config
 from tools.test_tools import get_exp
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
@@ -30,7 +30,7 @@ def run(dataset_name, model_name):
         heads, emb_dims, ffn_dims = heads_hp.domain.values, emb_dims_hp.domain.values, ffn_dims_hp.domain.values
         for head, emb_dim, ffn_dim in itertools.product(heads, emb_dims, ffn_dims):
             hyper_param = {heads_hp: head, emb_dims_hp: emb_dim, ffn_dims_hp: ffn_dim}
-            exp = Attention(dataset_name, hyper_param, exp_dir=exp_dir)
+            exp = Transformer(dataset_name, hyper_param, exp_dir=exp_dir)
             exp.run()
 
 

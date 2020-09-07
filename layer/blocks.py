@@ -49,8 +49,7 @@ class Encoder(Layer):
         self.norm2 = LayerNormalization(epsilon=1e-6)
 
     def call(self, inputs, **kwargs):
-        encodings, = inputs
-        att_outputs = self.att(encodings)
+        att_outputs = self.att(inputs)
         att_outputs = self.norm1(inputs + att_outputs)
 
         enc_outputs = self.ffn(att_outputs)
@@ -68,17 +67,19 @@ class Decoder(Layer):
         self.norm1 = LayerNormalization(epsilon=1e-6)
         self.norm2 = LayerNormalization(epsilon=1e-6)
         self.norm3 = LayerNormalization(epsilon=1e-6)
+        self.dnn = Dense(emb_dim)
 
     def call(self, inputs, **kwargs):
-        encodings, enc_outputs = inputs
-        att_outputs1 = self.att1([encodings, encodings, encodings])
-        att_outputs1 = self.norm1(att_outputs1 + encodings)
+        embeddings, enc_outputs = inputs
+        att_outputs1 = self.att1([embeddings, embeddings, embeddings])
+        att_outputs1 = self.norm1(att_outputs1 + embeddings)
 
         att_outputs2 = self.att2([att_outputs1, enc_outputs, enc_outputs])
         att_outputs2 = self.norm2(att_outputs2 + att_outputs1)
 
         dec_outputs = self.ffn(att_outputs2)
         dec_outputs = self.norm3(att_outputs2 + dec_outputs)
+        dec_outputs = self.dnn(dec_outputs)
 
         return dec_outputs
 
