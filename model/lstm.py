@@ -1,15 +1,15 @@
 import numpy as np
 from model._base import _Base, _FoldBase
-from tensorflow.keras.layers import LSTM, Dense, ReLU, Masking
 from tensorflow.keras.layers import LayerNormalization, GlobalAveragePooling1D, TimeDistributed
+from tensorflow.keras.layers import LSTM, Dense, ReLU, Masking
 from tensorflow.keras.models import Sequential
 from tensorflow.keras import regularizers
 from config.data_config import data_config
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config, strategy
 
-use_gen, epoch = train_config['use_gen'], train_config['epoch']
-ws = data_config['ws']
+window, ws = data_config['window'], data_config['ws']
+epoch = train_config['epoch']
 
 
 class SimpleLSTM(_Base):
@@ -21,9 +21,12 @@ class SimpleLSTM(_Base):
             self._compile()
 
     def _build(self):
+        (w, s) = ws[self.dataset_name]
+        seq_len = (window[self.dataset_name] - w) // s + 1
+
         # WARNING: Masking is only supported in the CPU environment (not supported for CuDNN RNNs)
         model = Sequential()
-        model.add(Masking(mask_value=np.float32(3.14159), input_shape=(None, ws[self.dataset_name][0] * 2)))
+        model.add(Masking(mask_value=np.float32(3.14159), input_shape=(seq_len, w * 2)))
 
         for _ in range(self.hyper_param[rnn_nums_hp]):
             # foo = True if _ < self.hyper_param[rnn_nums_hp] - 1 else False
@@ -57,7 +60,6 @@ class SimpleLSTM(_Base):
             x=self.dataset_train, validation_data=self.dataset_valid, epochs=epoch,
             verbose=1, max_queue_size=10, workers=5, callbacks=self.callbacks
         )
-
 
 
 class FoldSimpleLSTM(SimpleLSTM, _FoldBase):
