@@ -59,7 +59,7 @@ class FFN(Layer):
         super(FFN, self).__init__(name=name)
         self.ffn = keras.Sequential([
             Dense(emb_dim),
-            Dense(ffn_dim, kernel_regularizer=regularizers.l2(0.1), activation='relu'),
+            Dense(ffn_dim, activation='relu', kernel_regularizer=regularizers.l2(0.1)),
             Dense(emb_dim)
         ])
 
