@@ -65,4 +65,3 @@ class FoldGenerator(_BaseGenerator):
         super().__init__(dataset_name)
         self.fold = fold
         self.sliding = load_fold(self.dataset_name, 'train', self.fold)
-

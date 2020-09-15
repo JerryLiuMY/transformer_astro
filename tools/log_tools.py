@@ -33,11 +33,13 @@ def rop_schedule():
 
 
 def plot_confusion(y_evalu_spar, y_predi_spar, categories):
+    # setting up
     matrix = np.around(confusion_matrix(y_evalu_spar, y_predi_spar, labels=categories), decimals=2)
     report = classification_report(y_evalu_spar, y_predi_spar, labels=categories, zero_division=0)
     confusion_fig, gs = plt.figure(figsize=(9, 12)), gridspec.GridSpec(3, 2)
     ax1, ax2 = plt.subplot(gs[0:2, :]), plt.subplot(gs[2, :])
 
+    # confusion matrix
     im = ax1.imshow(matrix, interpolation='nearest', cmap='Blues')
     confusion_fig.colorbar(im, ax=ax1)
     ax1.set_title('Confusion Matrix')
@@ -51,11 +53,13 @@ def plot_confusion(y_evalu_spar, y_predi_spar, categories):
         ax1.set_ylabel('True label')
         ax1.set_xlabel('Predicted label')
 
+    # classification report
     ax2.set_title('Classification Report', position=(0.4, 1))
     ax2.text(0.35, 0.6, report, size=12, family='monospace', ha='center', va='center')
     ax2.axis('off')
-    plt.tight_layout()
-    plt.show()
+
+    # clean up
+    confusion_fig.tight_layout()
 
     return confusion_fig
 

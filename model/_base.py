@@ -2,6 +2,7 @@ import os
 import re
 import numpy as np
 import tensorflow as tf
+import itertools
 from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
 from tensorflow.keras.backend import clear_session
@@ -79,22 +80,29 @@ class _Base:
             self.dataset_train = DataGenerator(self.dataset_name).get_dataset()
         self.dataset_valid = data_loader(self.dataset_name, 'valid')
 
-    def _load_call(self):
-        checkpoint = os.path.join(self.che_path, 'epoch_{epoch:02d}-val_acc_{val_categorical_accuracy:.3f}.hdf5')
-        lnr_callback = LearningRateScheduler(schedule=lnr_schedule, verbose=1)
-        his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
-        img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
-        che_callback = ModelCheckpoint(filepath=checkpoint, save_weights_only=True)
-        hyp_callback = hp.KerasCallback(self.hyp_path, self.hyper_param)
-        self.callbacks = [lnr_callback, his_callback, img_callback, che_callback, hyp_callback]
-
-    # build, compile & train model
+    # build, compile and log
     def _build(self):
         model = None
         self.model = model
 
     def _compile(self):
         self.model.compile()
+
+    def _load_call(self):
+        checkpoint = os.path.join(self.che_path, 'epoch_{epoch:02d}-val_acc_{val_categorical_accuracy:.3f}.hdf5')
+        lnr_callback = LearningRateScheduler(schedule=lnr_schedule, verbose=1)
+        his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
+        img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
+        hyp_callback = LambdaCallback(on_epoch_end=self._log_hyper_param)
+        che_callback = ModelCheckpoint(filepath=checkpoint, save_weights_only=True)
+        self.callbacks = [lnr_callback, his_callback, img_callback, hyp_callback, che_callback]
+
+    def _log_hyper_param(self, step, logs):
+        with tf.summary.create_file_writer(self.hyp_path).as_default():
+            hp.hparams(self.hyper_param)
+            results = self.model.evaluate(self.dataset_valid)
+            for metric_name, result in itertools.product(metric_names, results):
+                tf.summary.scalar(metric_name, result, step=step)
 
     def _log_confusion(self, step, logs):
         y_evalu = np.array([]).reshape(0, len(self.categories))
