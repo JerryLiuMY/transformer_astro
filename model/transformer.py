@@ -44,17 +44,20 @@ class Transformer(_Base):
         self.encoder = Encoder(
             self.hyper_param[heads_hp],
             self.hyper_param[emb_dims_hp],
-            self.hyper_param[emb_dims_hp] * 2
+            self.hyper_param[emb_dims_hp] * 2,
+            name='encoder'
         )
 
         self.decoder = Decoder(
             self.hyper_param[heads_hp],
             self.hyper_param[emb_dims_hp],
-            self.hyper_param[emb_dims_hp] * 2
+            self.hyper_param[emb_dims_hp] * 2,
+            name='decoder'
         )
 
         self.dnn = Dense(
-            w * 2, kernel_regularizer=regularizers.l2(0.1)
+            w * 2, kernel_regularizer=regularizers.l2(0.1),
+            name='dense'
         )
 
         self.classifier = Classifier(
@@ -73,14 +76,14 @@ class Transformer(_Base):
             outputs = self.classifier(inputs)
             self.model = Model(inputs=inputs, outputs=outputs)
 
-        if self.implement == 1:
-            outputs = self.classifier(enc_outputs)
-            self.model = Model(inputs=inputs, outputs=outputs)
-
-        if self.implement in [2, 3]:
+        if self.implement in [1, 2]:
             dec_outputs = self.dnn(dec_outputs)
             outputs = self.classifier(enc_outputs)
             self.seq2seq = Model(inputs=inputs, outputs=dec_outputs)
+            self.model = Model(inputs=inputs, outputs=outputs)
+
+        if self.implement == 3:
+            outputs = self.classifier(enc_outputs)
             self.model = Model(inputs=inputs, outputs=outputs)
 
         if self.implement == 4:
@@ -104,13 +107,13 @@ class Transformer(_Base):
         seq_dataset = seq_loader(self.dataset_name, 'train')
 
         for e in range(epoch):
-            if self.implement in [2, 3]:
+            if self.implement in [1, 2]:
                 self.seq2seq.trainable = True
                 self._compile_seq()
-            if self.implement == 2:
+            if self.implement == 1:
                 self.seq2seq.fit(x=seq_dataset, initial_epoch=e, epochs=e+1)
                 self.seq2seq.trainable = False
-            elif self.implement == 3:
+            elif self.implement == 2:
                 self.seq2seq.fit(x=seq_dataset, initial_epoch=e, epochs=e+1)
                 self.seq2seq.trainable = True
 

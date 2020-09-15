@@ -63,6 +63,7 @@ class _Base:
         self.img_path = os.path.join(self.img_dir, self.exp_name)
         self.hyp_path = os.path.join(self.hyp_dir, self.exp_name)
         self.che_path = os.path.join(self.che_dir, self.exp_name)
+        create_dirs(self.his_path, self.img_path, self.hyp_path, self.che_path)
 
     def _load_enco(self):
         one_hot = one_hot_loader(self.dataset_name)
@@ -129,7 +130,10 @@ class _FoldBase(_Base):
             self.dataset_train = FoldGenerator(self.dataset_name, self.fold).get_dataset()
         self.dataset_valid = fold_loader(self.dataset_name, 'evalu', self.fold)
 
-# model simple
-# model transformer
+
 # visualize attention weights
 # visualize encoding
+# flip lightcurve
+# Weight the reconstruction loss by observational error
+# average the softmax
+# RNN classify the output

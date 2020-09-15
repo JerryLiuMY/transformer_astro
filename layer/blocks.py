@@ -42,8 +42,8 @@ class Embedding(Layer):
 
 
 class Encoder(Layer):
-    def __init__(self, head, emb_dim, ffn_dim):
-        super(Encoder, self).__init__(name='encoder')
+    def __init__(self, head, emb_dim, ffn_dim, name):
+        super(Encoder, self).__init__(name=name)
         self.att = MultiHeadAttention(head, emb_dim)
         self.ffn = FFN(emb_dim, ffn_dim)
         self.norm1 = LayerNormalization(epsilon=1e-6)
@@ -61,8 +61,8 @@ class Encoder(Layer):
 
 
 class Decoder(Layer):
-    def __init__(self, head, emb_dim, ffn_dim):
-        super(Decoder, self).__init__(name='decoder')
+    def __init__(self, head, emb_dim, ffn_dim, name):
+        super(Decoder, self).__init__(name=name)
         self.att1 = MultiHeadAttention(head, emb_dim)
         self.norm1 = LayerNormalization(epsilon=1e-6)
         self.att2 = MultiHeadAttention(head, emb_dim)
@@ -87,23 +87,23 @@ class Decoder(Layer):
 class Classifier(Layer):
     def __init__(self, categories, ffn_dim):
         super(Classifier, self).__init__(name='classifier')
-        self.poo = GlobalAveragePooling1D()
         self.dnn1 = Dense(ffn_dim, kernel_regularizer=regularizers.l2(0.1))
         self.norm1 = LayerNormalization(epsilon=1e-6)
         self.relu1 = ReLU()
         self.dnn2 = Dense(ffn_dim, kernel_regularizer=regularizers.l2(0.1))
         self.norm2 = LayerNormalization(epsilon=1e-6)
         self.relu2 = ReLU()
+        self.poo = GlobalAveragePooling1D()
         self.sfm = Dense(units=len(categories), activation='softmax', name='softmax')
 
     def call(self, inputs, **kwargs):
-        poo_outputs = self.poo(inputs)
-        int_outputs = self.dnn1(poo_outputs)
+        int_outputs = self.dnn1(inputs)
         int_outputs = self.norm1(int_outputs)
         int_outputs = self.relu1(int_outputs)
         int_outputs = self.dnn2(int_outputs)
         int_outputs = self.norm2(int_outputs)
         dnn_outputs = self.relu2(int_outputs)
-        outputs = self.sfm(dnn_outputs)
+        poo_outputs = self.poo(dnn_outputs)
+        outputs = self.sfm(poo_outputs)
 
         return outputs
