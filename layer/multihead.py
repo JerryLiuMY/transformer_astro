@@ -48,7 +48,7 @@ class MultiHeadAttention(Layer):
     def attention(self, query, key, value):
         key_dim = tf.cast(self.emb_dim, tf.float32)
         scores = tf.matmul(query, key, transpose_b=True) / tf.math.sqrt(key_dim)
-        weights = tf.nn.softmax(scores, axis=-1)
+        weights = tf.nn.softmax(scores, axis=-1, name='attention_weight')
         outputs = tf.matmul(weights, value)
 
         return outputs

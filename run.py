@@ -1,8 +1,7 @@
 from global_settings import FLAG
 import subprocess
 
-
-DATASET_NAME, MODEL_NAME = 'ASAS', 'tra'
+DATASET_NAME, MODEL_NAME = 'MACHO', 'tra'
 assert DATASET_NAME in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'OGLE'], 'Invalid dataset name'
 assert MODEL_NAME in ['sim', 'tra'], 'Invalid dataset type'
 
@@ -22,3 +21,4 @@ elif FLAG == 'floyd':
     subprocess.run(command, shell=True)
 else:
     raise AssertionError('Invalid FLAG')
+

@@ -8,8 +8,8 @@ import numpy as np
 
 
 class Embedding(Layer):
-    def __init__(self, seq_len, emb_dim):
-        super(Embedding, self).__init__()
+    def __init__(self, seq_len, emb_dim, name):
+        super(Embedding, self).__init__(name=name)
         self.emb_dim = emb_dim
         self.seq_len = seq_len
         self.dense = Dense(self.emb_dim, activation='relu')
@@ -42,8 +42,8 @@ class Embedding(Layer):
 
 
 class Encoder(Layer):
-    def __init__(self, head, emb_dim, ffn_dim, name='encoder'):
-        super(Encoder, self).__init__(name=name)
+    def __init__(self, head, emb_dim, ffn_dim):
+        super(Encoder, self).__init__(name='encoder')
         self.att = MultiHeadAttention(head, emb_dim)
         self.ffn = FFN(emb_dim, ffn_dim)
         self.norm1 = LayerNormalization(epsilon=1e-6)
@@ -61,15 +61,14 @@ class Encoder(Layer):
 
 
 class Decoder(Layer):
-    def __init__(self, head, emb_dim, ffn_dim, inp_dim):
-        super(Decoder, self).__init__()
+    def __init__(self, head, emb_dim, ffn_dim):
+        super(Decoder, self).__init__(name='decoder')
         self.att1 = MultiHeadAttention(head, emb_dim)
         self.norm1 = LayerNormalization(epsilon=1e-6)
         self.att2 = MultiHeadAttention(head, emb_dim)
         self.norm2 = LayerNormalization(epsilon=1e-6)
         self.ffn = FFN(emb_dim, ffn_dim)
         self.norm3 = LayerNormalization(epsilon=1e-6)
-        self.dnn = Dense(inp_dim, kernel_regularizer=regularizers.l2(0.1))
 
     def call(self, inputs, **kwargs):
         embeddings, enc_outputs = inputs
@@ -81,16 +80,14 @@ class Decoder(Layer):
 
         dec_outputs = self.ffn(att_outputs2)
         dec_outputs = self.norm3(att_outputs2 + dec_outputs)
-        dec_outputs = self.dnn(dec_outputs)
 
         return dec_outputs
 
 
 class Classifier(Layer):
-    def __init__(self, categories, ffn_dim, name='classifier'):
-        super(Classifier, self).__init__(name=name)
+    def __init__(self, categories, ffn_dim):
+        super(Classifier, self).__init__(name='classifier')
         self.poo = GlobalAveragePooling1D()
-
         self.dnn1 = Dense(ffn_dim, kernel_regularizer=regularizers.l2(0.1))
         self.norm1 = LayerNormalization(epsilon=1e-6)
         self.relu1 = ReLU()

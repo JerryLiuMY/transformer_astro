@@ -9,7 +9,7 @@ from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.exec_config import train_config, strategy
 
 window, ws = data_config['window'], data_config['ws']
-epoch = train_config['epoch']
+metrics, epoch = train_config['metrics'], train_config['epoch']
 
 
 class SimpleLSTM(_Base):
@@ -19,6 +19,7 @@ class SimpleLSTM(_Base):
         with strategy.scope():
             self._build()
             self._compile()
+            self._load_call()
 
     def _build(self):
         (w, s) = ws[self.dataset_name]
@@ -53,7 +54,7 @@ class SimpleLSTM(_Base):
         self.model.compile(
             loss='categorical_crossentropy',
             optimizer='adam',
-            metrics=self.metrics)
+            metrics=metrics)
 
     def run(self):
         self.model.fit(

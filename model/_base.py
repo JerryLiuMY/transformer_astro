@@ -1,16 +1,15 @@
 import os
 import re
+import itertools
 import numpy as np
 import tensorflow as tf
-import itertools
-from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
-from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
+from datetime import datetime
 from tensorflow.keras.backend import clear_session
 from tensorboard.plugins.hparams import api as hp
-from datetime import datetime
-from data.loader import data_loader, one_hot_loader
+from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
+from tensorflow.keras.callbacks import TensorBoard, LambdaCallback
+from data.loader import data_loader, one_hot_loader, fold_loader
 from data.generator import DataGenerator, FoldGenerator
-from data.loader import fold_loader
 from tools.dir_tools import create_dirs
 from tools.log_tools import lnr_schedule, plot_confusion, fig_to_img
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
@@ -32,7 +31,6 @@ def log_params(exp_dir):
 
 
 class _Base:
-
     def __init__(self, dataset_name, hyper_param, exp_dir):
         clear_session()
         self.dataset_name = dataset_name
@@ -44,8 +42,6 @@ class _Base:
             self._load_path()
             self._load_enco()
             self._load_data()
-            self._load_call()
-            self.metrics = metrics
 
     def _load_name(self):
         now = datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
@@ -93,16 +89,9 @@ class _Base:
         lnr_callback = LearningRateScheduler(schedule=lnr_schedule, verbose=1)
         his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
         img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
-        hyp_callback = LambdaCallback(on_epoch_end=self._log_hyper_param)
         che_callback = ModelCheckpoint(filepath=checkpoint, save_weights_only=True)
-        self.callbacks = [lnr_callback, his_callback, img_callback, hyp_callback, che_callback]
-
-    def _log_hyper_param(self, step, logs):
-        with tf.summary.create_file_writer(self.hyp_path).as_default():
-            hp.hparams(self.hyper_param)
-            results = self.model.evaluate(self.dataset_valid)
-            for metric_name, result in itertools.product(metric_names, results):
-                tf.summary.scalar(metric_name, result, step=step)
+        hyp_callback = LambdaCallback(on_train_end=self._log_hyper_param)
+        self.callbacks = [lnr_callback, his_callback, img_callback, che_callback, hyp_callback]
 
     def _log_confusion(self, step, logs):
         y_evalu = np.array([]).reshape(0, len(self.categories))
@@ -119,6 +108,13 @@ class _Base:
         with tf.summary.create_file_writer(self.img_path).as_default():
             tf.summary.image('Confusion Matrix', confusion_img, step=step)
 
+    def _log_hyper_param(self, logs):
+        with tf.summary.create_file_writer(self.hyp_path).as_default():
+            hp.hparams(self.hyper_param)
+            results = self.model.evaluate(self.dataset_valid)
+            for metric_name, result in itertools.product(metric_names, results):
+                tf.summary.scalar(metric_name, result, step=0)
+
 
 class _FoldBase(_Base):
 
@@ -132,3 +128,8 @@ class _FoldBase(_Base):
         else:
             self.dataset_train = FoldGenerator(self.dataset_name, self.fold).get_dataset()
         self.dataset_valid = fold_loader(self.dataset_name, 'evalu', self.fold)
+
+# model simple
+# model transformer
+# visualize attention weights
+# visualize encoding
