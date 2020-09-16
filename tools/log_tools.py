@@ -10,7 +10,7 @@ from sklearn.metrics import confusion_matrix, classification_report
 def lnr_schedule(step):
     begin_rate = 0.001
     decay_rate = 0.7
-    decay_step = 50
+    decay_step = 30
 
     learn_rate = begin_rate * np.power(decay_rate, np.divmod(step, decay_step)[0])
     tf.summary.scalar('Learning Rate', data=learn_rate, step=step)

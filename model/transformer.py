@@ -5,9 +5,9 @@ from config.model_config import implements_hp, heads_hp, emb_dims_hp
 from config.data_config import data_config
 from config.exec_config import train_config, strategy
 from data.loader import seq_loader
-from keras import Model
 from tensorflow.python.keras.layers import Dense
 from tensorflow.keras import regularizers
+from keras import Model
 
 
 window, ws = data_config['window'], data_config['ws']
@@ -106,22 +106,31 @@ class Transformer(_Base):
     def run(self):
         seq_dataset = seq_loader(self.dataset_name, 'train')
 
-        for e in range(epoch):
-            if self.implement in [1, 2]:
-                self.seq2seq.trainable = True
-                self._compile_seq()
-            if self.implement == 1:
-                self.seq2seq.fit(x=seq_dataset, initial_epoch=e, epochs=e+1)
-                self.seq2seq.trainable = False
-            elif self.implement == 2:
-                self.seq2seq.fit(x=seq_dataset, initial_epoch=e, epochs=e+1)
-                self.seq2seq.trainable = True
-
+        if self.implement in [0, 3, 4]:
             self._compile()
             self.model.fit(
                 x=self.dataset_train, validation_data=self.dataset_valid, initial_epoch=3*e, epochs=3*(e+1),
                 verbose=0, max_queue_size=10, workers=5, callbacks=self.callbacks
             )
+        elif self.implement == 1:
+            self._compile_seq()
+            self.seq2seq.fit(x=seq_dataset, initial_epoch=0, epochs=3*epoch)
+            self.seq2seq.trainable = False
+            self._compile()
+            self.model.fit(
+                x=self.dataset_train, validation_data=self.dataset_valid, initial_epoch=3*e, epochs=3*(e+1),
+                verbose=0, max_queue_size=10, workers=5, callbacks=self.callbacks
+            )
+
+        elif self.implement == 2:
+            self._compile_seq()
+            self._compile()
+            for e in range(epoch):
+                self.seq2seq.fit(x=seq_dataset, initial_epoch=3*e, epochs=3*(e+1))
+                self.model.fit(
+                    x=self.dataset_train, validation_data=self.dataset_valid, initial_epoch=3*e, epochs=3*(e+1),
+                    verbose=0, max_queue_size=10, workers=5, callbacks=self.callbacks
+                )
 
 
 class FoldTransformer(Transformer, _FoldBase):
