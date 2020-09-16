@@ -120,7 +120,7 @@ class Transformer(_Base):
             self._compile()
             self.model.fit(
                 x=self.dataset_train, validation_data=self.dataset_valid, initial_epoch=3*e, epochs=3*(e+1),
-                verbose=2, max_queue_size=10, workers=5, callbacks=self.callbacks
+                verbose=0, max_queue_size=10, workers=5, callbacks=self.callbacks
             )
 
 

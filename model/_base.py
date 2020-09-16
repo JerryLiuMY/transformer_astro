@@ -87,7 +87,7 @@ class _Base:
 
     def _load_call(self):
         checkpoint = os.path.join(self.che_path, 'epoch_{epoch:02d}-val_acc_{val_categorical_accuracy:.3f}.hdf5')
-        lnr_callback = LearningRateScheduler(schedule=lnr_schedule, verbose=1)
+        lnr_callback = LearningRateScheduler(schedule=lnr_schedule, verbose=0)
         his_callback = TensorBoard(log_dir=self.his_path, profile_batch=0)
         img_callback = LambdaCallback(on_epoch_end=self._log_confusion)
         che_callback = ModelCheckpoint(filepath=checkpoint, save_weights_only=True)
@@ -137,3 +137,8 @@ class _FoldBase(_Base):
 # Weight the reconstruction loss by observational error
 # average the softmax
 # RNN classify the output
+
+
+# In the classifier, the AveragePooling can be applied to a)input b)softmax output c)intermediate layers
+# approach a) and b) achieve good classification result only for encoded information
+# approach c) achieves good results for a naive classifier -- time-distributed wrapper shares information between steps

@@ -21,4 +21,3 @@ elif FLAG == 'floyd':
     subprocess.run(command, shell=True)
 else:
     raise AssertionError('Invalid FLAG')
-
