@@ -3,6 +3,12 @@ import tensorflow as tf
 import subprocess
 import os
 
+train_config = {
+    "use_gen": False,
+    "epoch": 50,
+    "metrics": ['CategoricalAccuracy', 'Precision', 'Recall']
+}
+
 gpu_devices = tf.config.list_physical_devices('GPU')
 cpu_devices = tf.config.list_physical_devices('CPU')
 
@@ -28,13 +34,3 @@ except KeyError:
     else:
         raise EnvironmentError("No physical devices or remote devices")
 
-
-train_config = {
-    "use_gen": False,
-    "epoch": 70,
-    "metrics": ['CategoricalAccuracy', 'Precision', 'Recall']
-}
-
-evalu_config = {
-    "kfold": 10
-}

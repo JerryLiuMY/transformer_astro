@@ -5,14 +5,14 @@ from tools.dir_tools import get_log_dir, get_exp_dir
 from model._base import log_params
 from model.lstm import SimpleLSTM, FoldSimpleLSTM
 from model.transformer import Transformer, FoldTransformer
-from config.exec_config import evalu_config
+from config.data_config import data_config
 from tools.test_tools import get_exp
 from config.model_config import rnn_nums_hp, rnn_dims_hp, dnn_nums_hp
 from config.model_config import implements_hp, heads_hp, emb_dims_hp
 from test.evaluation import evaluate
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-kfold = evalu_config['kfold']
+kfold = data_config['kfold']
 
 
 def run(dataset_name, model_name):

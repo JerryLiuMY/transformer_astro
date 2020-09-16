@@ -33,10 +33,11 @@ ws = {
 }
 
 data_config = {
-  "sample": sample,
   "thresh": thresh,
+  "sample": sample,
   "window": window,
   "stride": stride,
   "ws": ws,
   "batch": 256,
+  "kfold": 10
 }
