@@ -94,10 +94,16 @@ class Classifier(Layer):
         self.poo = GlobalAveragePooling1D(data_format='channels_last')
 
     def call(self, inputs, **kwargs):
-        int_outputs = self.dnn(inputs)
+        int_outputs = self.poo(inputs)
+        int_outputs = self.dnn(int_outputs)
         int_outputs = self.norm(int_outputs)
         dnn_outputs = self.relu(int_outputs)
-        sfm_outputs = self.sfm(dnn_outputs)
-        outputs = self.poo(sfm_outputs)
+        outputs = self.sfm(dnn_outputs)
+
+        # int_outputs = self.dnn(inputs)
+        # int_outputs = self.norm(int_outputs)
+        # dnn_outputs = self.relu(int_outputs)
+        # sfm_outputs = self.sfm(dnn_outputs)
+        # outputs = self.poo(sfm_outputs)
 
         return outputs
