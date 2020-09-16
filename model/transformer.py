@@ -8,7 +8,7 @@ from data.loader import seq_loader
 from tensorflow.python.keras.layers import Dense
 from tensorflow.keras import regularizers
 from keras import Model
-
+from datetime import datetime
 
 window, ws = data_config['window'], data_config['ws']
 metrics, epoch = train_config['metrics'], train_config['epoch']
@@ -109,16 +109,19 @@ class Transformer(_Base):
         if self.implement in [0, 3, 4]:
             self._compile()
             self.model.fit(
-                x=self.dataset_train, validation_data=self.dataset_valid, initial_epoch=3*e, epochs=3*(e+1),
+                x=self.dataset_train, validation_data=self.dataset_valid, epochs=3*epoch,
                 verbose=0, max_queue_size=10, workers=5, callbacks=self.callbacks
             )
+
         elif self.implement == 1:
+            print(f'{datetime.now()} Fitting Sequence')
             self._compile_seq()
-            self.seq2seq.fit(x=seq_dataset, initial_epoch=0, epochs=3*epoch)
+            self.seq2seq.fit(x=seq_dataset, validation_data=seq_dataset, validation_freq=80, epochs=12*epoch, verbose=0)
             self.seq2seq.trainable = False
+            print(f'{datetime.now()} Fitting Model')
             self._compile()
             self.model.fit(
-                x=self.dataset_train, validation_data=self.dataset_valid, initial_epoch=3*e, epochs=3*(e+1),
+                x=self.dataset_train, validation_data=self.dataset_valid, epochs=5*epoch,
                 verbose=0, max_queue_size=10, workers=5, callbacks=self.callbacks
             )
 
