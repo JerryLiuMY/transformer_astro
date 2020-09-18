@@ -107,6 +107,7 @@ class Transformer(_Base):
         seq_dataset = seq_loader(self.dataset_name, 'train')
 
         if self.implement in [0, 3, 4]:
+            print(f'{datetime.now()} Fitting Model')
             self._compile()
             self.model.fit(
                 x=self.dataset_train, validation_data=self.dataset_valid, epochs=3*epoch,
@@ -118,6 +119,7 @@ class Transformer(_Base):
             self._compile_seq()
             self.seq2seq.fit(x=seq_dataset, validation_data=seq_dataset, validation_freq=80, epochs=12*epoch, verbose=0)
             self.seq2seq.trainable = False
+
             print(f'{datetime.now()} Fitting Model')
             self._compile()
             self.model.fit(
@@ -129,7 +131,7 @@ class Transformer(_Base):
             self._compile_seq()
             self._compile()
             for e in range(epoch):
-                self.seq2seq.fit(x=seq_dataset, initial_epoch=3*e, epochs=3*(e+1))
+                self.seq2seq.fit(x=seq_dataset, initial_epoch=3*e, epochs=3*(e+1), verbose=0)
                 self.model.fit(
                     x=self.dataset_train, validation_data=self.dataset_valid, initial_epoch=3*e, epochs=3*(e+1),
                     verbose=0, max_queue_size=10, workers=5, callbacks=self.callbacks
