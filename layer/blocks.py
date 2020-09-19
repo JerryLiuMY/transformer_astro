@@ -87,9 +87,12 @@ class Decoder(Layer):
 class Classifier(Layer):
     def __init__(self, categories, ffn_dim):
         super(Classifier, self).__init__(name='classifier')
-        self.dnn = Dense(ffn_dim, kernel_regularizer=regularizers.l2(0.1))
-        self.norm = LayerNormalization(epsilon=1e-6)
-        self.relu = ReLU()
+        self.dnn1 = Dense(ffn_dim, kernel_regularizer=regularizers.l2(0.1))
+        self.norm1 = LayerNormalization(epsilon=1e-6)
+        self.relu1 = ReLU()
+        self.dnn2 = Dense(ffn_dim, kernel_regularizer=regularizers.l2(0.1))
+        self.norm2 = LayerNormalization(epsilon=1e-6)
+        self.relu2 = ReLU()
         self.sfm = Dense(units=len(categories), activation='softmax')
         self.poo = GlobalAveragePooling1D(data_format='channels_last')
 
@@ -100,9 +103,12 @@ class Classifier(Layer):
         # dnn_outputs = self.relu(int_outputs)
         # outputs = self.sfm(dnn_outputs)
 
-        int_outputs = self.dnn(inputs)
-        int_outputs = self.norm(int_outputs)
-        dnn_outputs = self.relu(int_outputs)
+        int_outputs = self.dnn1(inputs)
+        int_outputs = self.norm1(int_outputs)
+        int_outputs = self.relu1(int_outputs)
+        int_outputs = self.dnn2(int_outputs)
+        int_outputs = self.norm2(int_outputs)
+        dnn_outputs = self.relu2(int_outputs)
         sfm_outputs = self.sfm(dnn_outputs)
         outputs = self.poo(sfm_outputs)
 
