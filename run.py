@@ -1,7 +1,7 @@
 from global_settings import FLAG
 import subprocess
 
-DATASET_NAME, MODEL_NAME = 'MACHO', 'tra'
+DATASET_NAME, MODEL_NAME = 'WISE', 'tra'
 assert DATASET_NAME in ['ASAS', 'MACHO', 'WISE', 'GAIA', 'OGLE'], 'Invalid dataset name'
 assert MODEL_NAME in ['sim', 'tra'], 'Invalid dataset type'
 
